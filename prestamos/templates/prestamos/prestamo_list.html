@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Préstamos</h3>
+  <a href="{% url 'prestamos:prestamo_create' %}" class="btn btn-success">
+    ➕ Nuevo
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table id="prestamosTable" class="table table-striped table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="text-nowrap">ID</th>
+            <th class="text-nowrap">Trabajador</th>
+            <th class="text-nowrap">Monto</th>
+            <th class="text-nowrap">Interés %</th>
+            <th class="text-nowrap">Comisión %</th>
+            <th class="text-nowrap">Plazo</th>
+            <th class="text-nowrap">Inicio</th>
+            <th class="text-nowrap">Fin</th>
+          </tr>
+          <!-- Filtros por columna -->
+          <tr>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="Buscar ID"></th>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="Buscar Trabajador"></th>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="Monto"></th>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="% Interés"></th>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="% Comisión"></th>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="Plazo"></th>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="Fecha inicio"></th>
+            <th class="text-nowrap"><input type="text" class="form-control form-control-sm" placeholder="Fecha fin"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in items %}
+            <tr>
+              <td class="text-nowrap" data-order="{{ p.id }}">
+                <a href="{% url 'prestamos:prestamo_detail' pk=p.id %}" class="text-decoration-none">
+                  #{{ p.id }}
+                </a>
+              </td>
+              <td class="text-nowrap">{{ p.trabajador.nombre }}</td>
+              <td class="text-nowrap">{{ p.monto }}</td>
+              <td class="text-nowrap">{{ p.interes }}</td>
+              <td class="text-nowrap">{{ p.comision }}</td>
+              <td class="text-nowrap">{{ p.plazo }}</td>
+              <td class="text-nowrap">{{ p.fecha_inicio|date:"d/m/Y" }}</td>
+              <td class="text-nowrap">{{ p.fecha_final|date:"d/m/Y" }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" class="text-center text-muted">⚠️ No se encontraron préstamos</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DataTables -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function () {
+  // Inicializar DataTable
+  var table = $('#prestamosTable').DataTable({
+    order: [[0, 'desc']],      // Orden por ID de mayor a menor
+    pageLength: 50,            // Mostrar 50 registros por página
+    orderCellsTop: true,
+    fixedHeader: true,
+    language: {
+      url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+    }
+  });
+
+  // Filtros en cada columna
+  $('#prestamosTable thead tr:eq(1) th').each(function (i) {
+    $('input', this).on('keyup change', function () {
+      if (table.column(i).search() !== this.value) {
+        table.column(i).search(this.value).draw();
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

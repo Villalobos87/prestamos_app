@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h3>Cancelar Cuotas</h3>
+
+<form method="get" class="row g-3 mb-3">
+    <div class="col-md-3">
+        <label for="fecha" class="form-label">Fecha de Cuotas</label>
+        <input type="date" id="fecha" name="fecha" class="form-control" value="{{ fecha }}">
+    </div>
+    <div class="col-md-3">
+        <label for="campus" class="form-label">Campus (opcional)</label>
+        <select id="campus" name="campus" class="form-select">
+            <option value="" {% if campus == "" %}selected{% endif %}>-- Todos --</option>
+            <option value="MANAGUA" {% if campus == "MANAGUA" %}selected{% endif %}>MANAGUA</option>
+            <option value="LEÓN" {% if campus == "LEÓN" %}selected{% endif %}>LEÓN</option>
+            <option value="MATAGALPA" {% if campus == "MATAGALPA" %}selected{% endif %}>MATAGALPA</option>
+        </select>
+    </div>
+    <div class="col-md-3 align-self-end">
+        <button type="submit" class="btn btn-primary">Buscar Cuotas</button>
+    </div>
+</form>
+
+{% if cuotas %}
+<div class="alert alert-info">
+    ⚠ Cuotas pendientes: <strong>{{ cuotas|length }}</strong> | Total pendiente: <strong>${{ total|floatformat:2 }}</strong>
+</div>
+
+<form id="cuotas-form" method="post">
+    {% csrf_token %}
+    <table class="table table-bordered table-sm align-middle" id="tabla-cuotas">
+        <thead class="table-light">
+            <tr>
+                <th><input type="checkbox" id="select_all"></th>
+                <th>Trabajador</th>
+                <th>Prestamo #</th>
+                <th>Fecha Pago</th>
+                <th># Cuota</th>
+                <th>Monto</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cuota in cuotas %}
+            <tr>
+                <td><input type="checkbox" name="cuotas" value="{{ cuota.id }}"></td>
+                <td>{{ cuota.prestamo.trabajador.nombre }}</td>
+                <td>{{ cuota.prestamo.id }}</td>
+                <td>{{ cuota.fecha_pago }}</td>
+                <td>{{ cuota.numero }}/{{ cuota.prestamo.plazo }}</td>
+                <td class="monto">{{ cuota.monto_total|floatformat:2 }}</td>
+                <td>
+                    {% if cuota.estado == "Pagado" %}
+                        <span class="badge bg-success">Pagado</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="5" style="text-align:right">Total:</th>
+                <th id="total-monto">0.00</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="mb-3">
+        <label for="accion" class="form-label">Acción</label>
+        <select id="accion" name="accion" class="form-select" required>
+            <option value="">-- Selecciona --</option>
+            <option value="cancelar">Cancelar</option>
+        </select>
+    </div>
+
+    <div class="mb-3" id="cheque-div" style="display:none;">
+        <label for="cheque" class="form-label">Número de cheque o EFECTIVO</label>
+        <input type="text" id="cheque" name="cheque" class="form-control" placeholder="Número de cheque o EFECTIVO">
+    </div>
+
+    <button type="button" class="btn btn-success" id="aplicar-btn">Aplicar Acción</button>
+</form>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar Acción</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        ⚠ Vas a procesar <strong id="modal-cuotas-count"></strong> cuota(s) con un total pendiente de <strong id="modal-total"></strong>.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" id="confirm-btn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const selectAll = document.getElementById('select_all');
+    const cuotasForm = document.getElementById('cuotas-form');
+    const accionSelect = document.getElementById('accion');
+    const chequeDiv = document.getElementById('cheque-div');
+    const chequeInput = document.getElementById('cheque');
+    const aplicarBtn = document.getElementById('aplicar-btn');
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    const confirmBtn = document.getElementById('confirm-btn');
+    const modalCuotasCount = document.getElementById('modal-cuotas-count');
+    const modalTotal = document.getElementById('modal-total');
+    const totalMonto = document.getElementById('total-monto');
+
+    const checkboxes = document.querySelectorAll('input[name="cuotas"]');
+
+    // Función para actualizar total
+    function actualizarTotal() {
+        let total = 0;
+        document.querySelectorAll('input[name="cuotas"]:checked').forEach(cb => {
+            const monto = parseFloat(cb.closest('tr').querySelector('.monto').textContent) || 0;
+            total += monto;
+        });
+        totalMonto.textContent = total.toFixed(2);
+    }
+
+    // Seleccionar/Deseleccionar todos
+    selectAll.addEventListener('change', function() {
+        checkboxes.forEach(cb => cb.checked = this.checked);
+        actualizarTotal();
+    });
+
+    // Cada checkbox individual
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const totalCheckboxes = checkboxes.length;
+            const checkedCheckboxes = document.querySelectorAll('input[name="cuotas"]:checked').length;
+            selectAll.checked = totalCheckboxes === checkedCheckboxes;
+            actualizarTotal();
+        });
+    });
+
+    // Mostrar campo de cheque si se selecciona cancelar
+    accionSelect.addEventListener('change', () => {
+        if (accionSelect.value === 'cancelar') {
+            chequeDiv.style.display = 'block';
+            chequeInput.required = true;
+        } else {
+            chequeDiv.style.display = 'none';
+            chequeInput.required = false;
+            chequeInput.value = '';
+        }
+    });
+
+    // Modal de confirmación
+    aplicarBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const seleccionadas = document.querySelectorAll('input[name="cuotas"]:checked');
+        if (seleccionadas.length === 0) {
+            alert('❌ No seleccionaste ninguna cuota.');
+            return;
+        }
+        let total = 0;
+        seleccionadas.forEach(cb => total += parseFloat(cb.closest('tr').querySelector('.monto').textContent) || 0);
+        modalCuotasCount.textContent = seleccionadas.length;
+        modalTotal.textContent = `$${total.toFixed(2)}`;
+        confirmModal.show();
+    });
+
+    confirmBtn.addEventListener('click', () => {
+        confirmModal.hide();
+        cuotasForm.submit();
+    });
+
+    // Inicializar total
+    actualizarTotal();
+});
+</script>
+
+{% else %}
+<p class="text-muted">No hay cuotas pendientes para la fecha/campus seleccionado.</p>
+{% endif %}
+
+{% endblock %}

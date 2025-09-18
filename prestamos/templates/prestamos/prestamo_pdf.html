@@ -1,0 +1,71 @@
+{% load sum_filters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Préstamo {{ object.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
+        h1, h2, h3 { text-align: center; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #444; padding: 6px; text-align: center; }
+        th { background: #f2f2f2; }
+        tfoot td { font-weight: bold; background: #eee; }
+        .badge { padding: 3px 6px; border-radius: 4px; color: #fff; }
+        .bg-success { background-color: #28a745; }
+        .bg-secondary { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>Detalle del Préstamo #{{ object.id }}</h1>
+    <h3>{{ object.trabajador.codigo }} - {{ object.trabajador.nombre }} - {{ object.trabajador.campus }}</h3>
+
+    <p><strong>Monto:</strong> {{ object.monto }} | <strong>Interés %:</strong> {{ object.interes }} | <strong>Comisión %:</strong> {{ object.comision }} | <strong>Plazo:</strong> {{ object.plazo }}</p>
+    <p><strong>Fecha inicio:</strong> {{ object.fecha_inicio }} | <strong>Fecha final:</strong> {{ object.fecha_final }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th># Cuota</th>
+                <th>Principal</th>
+                <th>Comisión</th>
+                <th>Interés</th>
+                <th>Cuota</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in object.cuotas.all %}
+            <tr>
+                <td>{{ c.numero }}</td>
+                <td>{{ c.fecha_pago }}</td>
+                <td>{{ c.numero }}/{{ object.plazo }}</td>
+                <td>{{ c.principal }}</td>
+                <td>{{ c.comision }}</td>
+                <td>{{ c.interes }}</td>
+                <td>{{ c.monto_total }}</td>
+                <td>
+                    {% if c.estado == "Pagado" %}
+                        <span class="badge bg-success">Pagado</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Pendiente</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">Totales</td>
+                <td>{{ object.cuotas.all|sum_attr:"principal" }}</td>
+                <td>{{ object.cuotas.all|sum_attr:"comision" }}</td>
+                <td>{{ object.cuotas.all|sum_attr:"interes" }}</td>
+                <td>{{ object.cuotas.all|sum_attr:"monto_total" }}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>

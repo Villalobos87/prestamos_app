@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load sum_filters %}
+
+{% block content %}
+<h3>Detalle del Préstamo #{{ object.id }}</h3>
+<p><b>Trabajador:</b> {{ object.trabajador.codigo }} - {{ object.trabajador.nombre }} ({{ object.trabajador.campus }})</p>
+<p><b>Monto:</b> {{ object.monto }} | <b>Interés %:</b> {{ object.interes }} | <b>Comisión %:</b> {{ object.comision }} | <b>Plazo:</b> {{ object.plazo }}</p>
+<p><b>Fecha inicio:</b> {{ object.fecha_inicio }} | <b>Fecha final:</b> {{ object.fecha_final }}</p>
+
+<div class="table-responsive">
+<table class="table table-bordered table-sm align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>#</th>
+      <th>Fecha</th>
+      <th># Cuota</th>
+      <th>Principal</th>
+      <th>Comisión</th>
+      <th>Interés</th>
+      <th>Cuota</th>
+      <th>Cheque</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in object.cuotas.all %}
+      <tr>
+        <td>{{ c.numero }}</td>
+        <td>{{ c.fecha_pago }}</td>
+        <td>{{ c.numero }}/{{ object.plazo }}</td>
+        <td>{{ c.principal }}</td>
+        <td>{{ c.comision }}</td>
+        <td>{{ c.interes }}</td>
+        <td>{{ c.monto_total }}</td>
+        <td>{{ c.cheque }}</td>
+        <td>
+          {% if c.estado == "Pagado" %}
+            <span class="badge bg-success">Pagado</span>
+          {% else %}
+            <span class="badge bg-secondary">Pendiente</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if c.estado == "Pendiente" %}
+          <form method="post" style="display:inline-flex; gap:4px; align-items:center;">
+            {% csrf_token %}
+            <input type="hidden" name="cuota_id" value="{{ c.id }}">
+            <input type="hidden" name="accion" value="pagar">
+            <input type="text" name="cheque" placeholder="Cheque/efectivo" class="form-control form-control-sm" style="width:120px;" required>
+            <button type="submit" class="btn btn-success btn-sm">💵 Pagar</button>
+          </form>
+
+          <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalFecha{{ c.id }}">📅 Cambiar fecha</button>
+
+          <!-- Modal para cambiar fecha -->
+          <div class="modal fade" id="modalFecha{{ c.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="post">
+                  {% csrf_token %}
+                  <div class="modal-header">
+                    <h5 class="modal-title">Cambiar fecha Cuota #{{ c.numero }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <input type="hidden" name="cuota_id" value="{{ c.id }}">
+                    <input type="hidden" name="accion" value="modificar_fecha">
+                    <div class="mb-3">
+                      <label>Nueva Fecha</label>
+                      <input type="date" name="nueva_fecha" value="{{ c.fecha_pago }}" class="form-control" required>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {% else %}
+            ---
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="fw-bold">
+      <td colspan="3" class="text-end">Totales</td>
+      <td>{{ object.cuotas.all|sum_attr:"principal" }}</td>
+      <td>{{ object.cuotas.all|sum_attr:"comision" }}</td>
+      <td>{{ object.cuotas.all|sum_attr:"interes" }}</td>
+      <td>{{ object.cuotas.all|sum_attr:"monto_total" }}</td>
+      <td colspan="3"></td>
+    </tr>
+  </tfoot>
+</table>
+</div>
+
+<div class="d-flex justify-content-between mt-3">
+  <a href="{% url 'prestamos:prestamo_list' %}" class="btn btn-outline-secondary">⬅️ Volver</a>
+  <a href="{% url 'prestamos:prestamo_edit' object.id %}" class="btn btn-primary">✏️ Modificar Préstamo</a>
+  <a href="{% url 'prestamos:prestamo_pdf' object.id %}" class="btn btn-danger">📄 Descargar PDF</a>
+</div>
+{% endblock %}
+
+

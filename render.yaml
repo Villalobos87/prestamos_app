@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: prestamos_app
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn prestamos_site.wsgi
+    autoDeploy: true
+    pythonVersion: "3.13"
