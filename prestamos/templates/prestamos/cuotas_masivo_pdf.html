@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cuotas Seleccionadas</title>
+</head>
+<body>
+    <h1>Reporte de Cuotas Seleccionadas</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Trabajador</th>
+                <th>Campus</th>
+                <th>Préstamo</th>
+                <th>Cuota</th>
+                <th>Fecha Pago</th>
+                <th>Monto</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cuotas %}
+            <tr>
+                <td>{{ c.prestamo.trabajador.nombre }}</td>
+                <td>{{ c.prestamo.trabajador.campus }}</td>
+                <td>#{{ c.prestamo.id }}</td>
+                <td>{{ c.numero }}</td>
+                <td>{{ c.fecha_pago }}</td>
+                <td>{{ c.monto_total }}</td>
+                <td>{{ c.estado }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5">TOTAL</td>
+                <td>{{ total }}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>

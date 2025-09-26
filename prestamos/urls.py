@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from .views import PrestamoUpdateView
+from .views import cuotas_masivo_pdf
 
 
 app_name = "prestamos"
@@ -18,5 +19,7 @@ urlpatterns = [
     path("prestamo/<int:pk>/editar/", PrestamoUpdateView.as_view(), name="prestamo_edit"),
 
     path("prestamo/<int:pk>/pdf/", views.prestamo_pdf, name="prestamo_pdf"),
+
+    path("cuotas/pdf/", cuotas_masivo_pdf, name="cuotas_masivo_pdf"),
 
 ]

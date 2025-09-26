@@ -120,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const checkboxes = document.querySelectorAll('input[name="cuotas"]');
 
-    // Función para actualizar total
     function actualizarTotal() {
         let total = 0;
         document.querySelectorAll('input[name="cuotas"]:checked').forEach(cb => {
@@ -130,13 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
         totalMonto.textContent = total.toFixed(2);
     }
 
-    // Seleccionar/Deseleccionar todos
     selectAll.addEventListener('change', function() {
         checkboxes.forEach(cb => cb.checked = this.checked);
         actualizarTotal();
     });
 
-    // Cada checkbox individual
     checkboxes.forEach(cb => {
         cb.addEventListener('change', () => {
             const totalCheckboxes = checkboxes.length;
@@ -146,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Mostrar campo de cheque si se selecciona cancelar
     accionSelect.addEventListener('change', () => {
         if (accionSelect.value === 'cancelar') {
             chequeDiv.style.display = 'block';
@@ -158,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Modal de confirmación
     aplicarBtn.addEventListener('click', (e) => {
         e.preventDefault();
         const seleccionadas = document.querySelectorAll('input[name="cuotas"]:checked');
@@ -178,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cuotasForm.submit();
     });
 
-    // Inicializar total
     actualizarTotal();
 });
 </script>

@@ -327,20 +327,61 @@ def prestamo_pdf(request, pk):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
-def cuotas_pdf(request):
-    # Aquí deberías traer las cuotas igual que en tu vista
-    cuotas = [...]  # tu queryset de cuotas
-    total = sum(c.monto_total for c in cuotas)
+def cuotas_masivo_pdf(request):
+    seleccionadas = request.POST.getlist("cuotas")
 
-    html_string = render_to_string("cuotas_pdf.html", {
+    if not seleccionadas:
+        messages.error(request, "❌ No seleccionaste ninguna cuota.")
+        return redirect("prestamos:cancelar_cuotas_masivo")
+
+    cuotas = Cuota.objects.filter(pk__in=seleccionadas).select_related("prestamo", "prestamo__trabajador")
+
+    context = {
         "cuotas": cuotas,
-        "total": total,
-    })
+        "total": sum(c.monto_total for c in cuotas),
+    }
 
-    # Crear PDF temporal
-    with tempfile.NamedTemporaryFile(delete=True) as tmp:
-        HTML(string=html_string).write_pdf(tmp.name)
-        tmp.seek(0)
-        response = HttpResponse(tmp.read(), content_type="application/pdf")
-        response['Content-Disposition'] = 'attachment; filename="cuotas.pdf"'
-        return response
+    html = render_to_string("prestamos/cuotas_masivo_pdf.html", context)
+
+    pdf_file = HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(
+        stylesheets=[CSS(string="""
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 11px;
+                color: #333;
+            }
+            h1 {
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }
+            th, td {
+                border: 1px solid #444;
+                padding: 5px;
+                text-align: center;
+            }
+            th {
+                background: #f2f2f2;
+            }
+            tfoot td {
+                font-weight: bold;
+                background: #eaeaea;
+            }
+        """)]
+    )
+
+    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response['Content-Disposition'] = 'attachment; filename="Cuotas_Seleccionadas.pdf"'
+    return response
+
+
+
+
