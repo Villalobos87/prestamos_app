@@ -326,3 +326,21 @@ def prestamo_pdf(request, pk):
     filename = f"Prestamo_{prestamo.id}_{prestamo.trabajador.nombre}_{prestamo.trabajador.campus}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+def cuotas_pdf(request):
+    # Aquí deberías traer las cuotas igual que en tu vista
+    cuotas = [...]  # tu queryset de cuotas
+    total = sum(c.monto_total for c in cuotas)
+
+    html_string = render_to_string("cuotas_pdf.html", {
+        "cuotas": cuotas,
+        "total": total,
+    })
+
+    # Crear PDF temporal
+    with tempfile.NamedTemporaryFile(delete=True) as tmp:
+        HTML(string=html_string).write_pdf(tmp.name)
+        tmp.seek(0)
+        response = HttpResponse(tmp.read(), content_type="application/pdf")
+        response['Content-Disposition'] = 'attachment; filename="cuotas.pdf"'
+        return response

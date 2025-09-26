@@ -104,6 +104,7 @@
   <a href="{% url 'prestamos:prestamo_list' %}" class="btn btn-outline-secondary">⬅️ Volver</a>
   <a href="{% url 'prestamos:prestamo_edit' object.id %}" class="btn btn-primary">✏️ Modificar Préstamo</a>
   <a href="{% url 'prestamos:prestamo_pdf' object.id %}" class="btn btn-danger">📄 Descargar PDF</a>
+  <a href="{% url 'cuotas_pdf' %}" class="btn btn-danger">📄 Descargar PDF</a>
 </div>
 {% endblock %}
 
