@@ -329,59 +329,42 @@ def prestamo_pdf(request, pk):
 
 def cuotas_masivo_pdf(request):
     seleccionadas = request.POST.getlist("cuotas")
-
     if not seleccionadas:
         messages.error(request, "❌ No seleccionaste ninguna cuota.")
         return redirect("prestamos:cancelar_cuotas_masivo")
 
     cuotas = Cuota.objects.filter(pk__in=seleccionadas).select_related("prestamo", "prestamo__trabajador")
 
+    # Tomamos fecha y campus de POST
+    fecha = request.POST.get("fecha", "")
+    campus = request.POST.get("campus", "")
+
     context = {
         "cuotas": cuotas,
         "total": sum(c.monto_total for c in cuotas),
+        "fecha": fecha,
+        "campus": campus,
     }
 
     html = render_to_string("prestamos/cuotas_masivo_pdf.html", context)
 
     pdf_file = HTML(string=html, base_url=request.build_absolute_uri()).write_pdf(
         stylesheets=[CSS(string="""
-            @page {
-                size: A4;
-                margin: 15mm;
-            }
-            body {
-                font-family: Arial, sans-serif;
-                font-size: 11px;
-                color: #333;
-            }
-            h1 {
-                text-align: center;
-                margin-bottom: 10px;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 10px;
-            }
-            th, td {
-                border: 1px solid #444;
-                padding: 5px;
-                text-align: center;
-            }
-            th {
-                background: #f2f2f2;
-            }
-            tfoot td {
-                font-weight: bold;
-                background: #eaeaea;
-            }
+            @page { size: A4; margin: 15mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; color: #333; }
+            h1 { text-align: center; margin-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { border: 1px solid #444; padding: 5px; text-align: center; }
+            th { background: #f2f2f2; }
+            tfoot td { font-weight: bold; background: #eaeaea; }
         """)]
     )
 
+    # Formateamos fecha para el nombre del archivo
+    fecha_texto = fecha.replace("-", "_") if fecha else "fecha"
+    campus_texto = campus.upper() if campus else "TODOS"
+    filename = f"Cuotas_{fecha_texto}_DEDUCCION_{campus_texto}.pdf"
+
     response = HttpResponse(pdf_file, content_type="application/pdf")
-    response['Content-Disposition'] = 'attachment; filename="Cuotas_Seleccionadas.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
-
-
-
-

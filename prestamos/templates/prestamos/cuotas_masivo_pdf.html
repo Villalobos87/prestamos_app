@@ -3,9 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Cuotas Seleccionadas</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #333; }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #444; padding: 5px; text-align: center; }
+        th { background: #f2f2f2; }
+        tfoot td { font-weight: bold; background: #eaeaea; }
+    </style>
 </head>
 <body>
-    <h1>Reporte de Cuotas Seleccionadas</h1>
+    <h1>
+        UNIVERSIDAD DE CIENCIAS COMERCIALES<br>
+        {{ fecha|date:"d \d\e F Y" }} 
+        {% if campus %} (CAMPUS {{ campus|upper }}) {% endif %}
+    </h1>
 
     <table>
         <thead>
@@ -16,7 +28,6 @@
                 <th>Cuota</th>
                 <th>Fecha Pago</th>
                 <th>Monto</th>
-                <th>Estado</th>
             </tr>
         </thead>
         <tbody>
@@ -25,18 +36,16 @@
                 <td>{{ c.prestamo.trabajador.nombre }}</td>
                 <td>{{ c.prestamo.trabajador.campus }}</td>
                 <td>#{{ c.prestamo.id }}</td>
-                <td>{{ c.numero }}</td>
-                <td>{{ c.fecha_pago }}</td>
-                <td>{{ c.monto_total }}</td>
-                <td>{{ c.estado }}</td>
+                <td>{{ c.numero }}/{{ c.prestamo.plazo }}</td>
+                <td>{{ c.fecha_pago|date:"d/m/Y" }}</td>
+                <td>{{ c.monto_total|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>
         <tfoot>
             <tr>
                 <td colspan="5">TOTAL</td>
-                <td>{{ total }}</td>
-                <td></td>
+                <td>{{ total|floatformat:2 }}</td>
             </tr>
         </tfoot>
     </table>
