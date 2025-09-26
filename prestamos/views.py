@@ -329,11 +329,14 @@ def prestamo_pdf(request, pk):
 
 def cuotas_masivo_pdf(request):
     seleccionadas = request.POST.getlist("cuotas")
+
     if not seleccionadas:
-        messages.error(request, "❌ No seleccionaste ninguna cuota.")
+        # ⚠ Mensaje de error al usuario
+        messages.error(request, "❌ BRUTA, TIENES QUE MARCAR LOS TRABAJADORES")
         return redirect("prestamos:cancelar_cuotas_masivo")
 
     cuotas = Cuota.objects.filter(pk__in=seleccionadas).select_related("prestamo", "prestamo__trabajador")
+
 
     # Tomamos fecha y campus de POST
     fecha = request.POST.get("fecha", "")
