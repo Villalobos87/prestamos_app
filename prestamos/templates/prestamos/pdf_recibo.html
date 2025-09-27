@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Recibo {{ prestamo.id }}</title>
+<style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    h1 { text-align: center; }
+    .firma { margin-top: 50px; text-align: center; }
+</style>
+</head>
+<body>
+<p>No. {{ prestamo.id }}-{{ prestamo.fecha_inicio.year }}</p>
+<h1>R E C I B O</h1>
+
+<p><strong>POR:</strong> ${{ monto_formato }}</p>
+<p><strong>Recibí de:</strong> {{ prestamo.trabajador.nombre }}</p>
+<p><strong>La cantidad de :</strong> {{ monto_letras }}</p>
+<p><strong>En Concepto de :</strong> Préstamo personal</p>
+
+<p>{{ ciudad }}, {{ fecha_texto }}</p>
+
+<div class="firma">
+_______________________________ &nbsp;&nbsp;&nbsp;&nbsp; ______________________________<br>
+Recibo
+</div>
+</body>
+</html>

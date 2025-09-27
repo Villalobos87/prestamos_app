@@ -22,4 +22,8 @@ urlpatterns = [
 
     path("cuotas/pdf/", cuotas_masivo_pdf, name="cuotas_masivo_pdf"),
 
+    path('prestamo/<int:pk>/pdf/<str:tipo>/', views.prestamo_documento_pdf, name='prestamo_documento_pdf'),
+
+    path('<int:prestamo_id>/imprimir/', views.imprimir_documento, name='imprimir_documento'),
+
 ]

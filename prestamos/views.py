@@ -18,7 +18,9 @@ from io import BytesIO
 from django.conf import settings
 import os
 from weasyprint import HTML, CSS
-
+from .models import Prestamo
+from num2words import num2words
+from datetime import datetime
 
 
 # ======================================
@@ -370,4 +372,87 @@ def cuotas_masivo_pdf(request):
 
     response = HttpResponse(pdf_file, content_type="application/pdf")
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+def prestamo_documento_pdf(request, pk, tipo):
+    prestamo = Prestamo.objects.get(pk=pk)
+    
+    if tipo not in ["recibo", "pagare", "solicitud"]:
+        return HttpResponse("Tipo de documento inválido", status=400)
+
+    # Fecha en español
+    meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ]
+    hoy = datetime.today()
+    fecha_texto = f"{hoy.day} de {meses[hoy.month - 1]} de {hoy.year}"
+
+    # Monto en letras
+    monto_letras = num2words(prestamo.monto, lang="es").capitalize() + " dólares"
+
+    context = {
+        "prestamo": prestamo,
+        "trabajador": prestamo.trabajador,
+        "fecha_texto": fecha_texto,
+        "ciudad": prestamo.trabajador.campus,
+        "monto_letras": monto_letras,
+    }
+
+    html_string = render_to_string(f"prestamos/pdf_{tipo}.html", context)
+
+    pdf_file = HTML(string=html_string).write_pdf(
+        stylesheets=[CSS(string="""
+            @page { size: A4; margin: 20mm; }
+            body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.6; }
+            h1, h2, h3 { text-align: center; }
+            .firma { margin-top: 50px; text-align: center; }
+        """)]
+    )
+
+    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response['Content-Disposition'] = f'attachment; filename={tipo}_prestamo_{prestamo.id}.pdf'
+    return response
+
+def imprimir_documento(request, prestamo_id):
+    prestamo = get_object_or_404(Prestamo, pk=prestamo_id)
+
+    tipo = request.GET.get("tipo")
+    if tipo not in ["solicitud", "recibo", "pagare"]:
+        return HttpResponse("❌ Tipo de documento inválido")
+
+    # Generar fecha y monto en letras
+    meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ]
+    hoy = datetime.today()
+    dia = hoy.day
+    mes = meses[hoy.month - 1]
+    anio = hoy.year
+    fecha_texto = f"{dia} de {mes} de {anio}"
+
+    monto_letras = num2words(prestamo.monto, lang="es").capitalize() + " dólares"
+
+    context = {
+        "prestamo": prestamo,
+        "trabajador": prestamo.trabajador,
+        "fecha_texto": fecha_texto,
+        "ciudad": prestamo.trabajador.campus,
+        "monto_letras": monto_letras,
+    }
+
+    html_string = render_to_string(f"prestamos/pdf_{tipo}.html", context)
+
+    pdf_file = HTML(string=html_string).write_pdf(
+        stylesheets=[CSS(string="""
+            @page { size: A4; margin: 20mm; }
+            body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.6; }
+            h1, h2, h3 { text-align: center; }
+            .firma { margin-top: 50px; text-align: center; }
+        """)]
+    )
+
+    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response['Content-Disposition'] = f'attachment; filename={tipo}_prestamo_{prestamo.id}.pdf'
     return response

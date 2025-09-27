@@ -1,0 +1,47 @@
+{% load sum_filters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitud de Préstamo #{{ prestamo.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; line-height: 1.5; }
+        h1, h2, h3 { text-align: center; margin-bottom: 10px; }
+        .firma { margin-top: 50px; text-align: center; }
+        p { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<!-- Ciudad y fecha -->
+<p style="text-align: right;"><strong>{{ ciudad }}, {{ fecha_texto }}</strong></p>
+
+<!-- Destinatario -->
+<p>
+    Lic. José Villalobos<br>
+    Director Administrativo Campus - León<br>
+    Su despacho
+</p>
+
+<!-- Saludo -->
+<p>Buenos días Licenciado Villalobos:</p>
+
+<p>Reciba un cordial saludo, esperando se encuentre bien de salud.</p>
+
+<!-- Cuerpo con monto en número y letras -->
+<p>
+    El motivo de la presente es para solicitarle su autorización para un préstamo de 
+    <strong>U${{ prestamo.monto }}</strong> (<strong>{{ monto_letras }}</strong>) 
+    para gastos que se me presentaron de emergencia.
+</p>
+
+<p>Me despido deseándole éxitos en sus labores y esperando una respuesta positiva a mi solicitud.</p>
+
+<!-- Firma -->
+<p class="firma">
+    Atentamente,<br><br><br>
+    {{ prestamo.trabajador.nombre }}
+</p>
+
+</body>
+</html>

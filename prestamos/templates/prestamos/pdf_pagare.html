@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Pagaré #{{ prestamo.id }}</title>
+<style>
+    body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5; margin: 20px; }
+    .firma { margin-top: 50px; text-align: center; }
+    h1 { text-align: center; }
+    p { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Compromiso de Pago No. {{ prestamo.id }}-{{ prestamo.fecha_inicio.year }}</h1>
+
+<p>
+Yo, <strong>{{ prestamo.trabajador.nombre }}</strong>, me constituyo como deudor por la cantidad de 
+<strong>U$ {{ prestamo.monto }}</strong> (<strong>{{ monto_letras|upper }} SOLAMENTE</strong>), 
+comprometiéndome a pagar dicho préstamo en cuotas quincenales de ${{ cuota_promedio }} a partir del {{ fecha_inicio_cuota }} , siendo la fecha de cancelación el {{ fecha_final }}.
+</p>
+
+<p>
+Para efecto de cancelación del préstamo personal, autorizo a mi acreedor que se me deduzcan de mis Prestaciones Sociales el saldo restante del préstamo, en caso de terminación de mi relación laboral en la Institución donde laboro por causa de Renuncia o Despido.
+</p>
+
+<p>Dado en la ciudad de {{ ciudad }}, a los {{ fecha_dia }} días del mes {{ fecha_mes }} {{ fecha_anio }}.</p>
+
+<p class="firma">
+___________________________<br>
+Firma del Deudor: {{ prestamo.trabajador.nombre }}
+</p>
+
+</body>
+</html>
