@@ -20,7 +20,7 @@ import os
 from weasyprint import HTML, CSS
 from .models import Prestamo
 from num2words import num2words
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # ======================================
@@ -375,35 +375,71 @@ def cuotas_masivo_pdf(request):
     return response
 
 def prestamo_documento_pdf(request, pk, tipo):
-    prestamo = Prestamo.objects.get(pk=pk)
+    prestamo = get_object_or_404(Prestamo, pk=pk)
     
-    if tipo not in ["recibo", "pagare", "solicitud"]:
+    if tipo not in ["pagare"]:  # Solo afectar el Pagaré
         return HttpResponse("Tipo de documento inválido", status=400)
 
-    # Fecha en español
+    # Meses en español
     meses = [
         "enero", "febrero", "marzo", "abril", "mayo", "junio",
         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
     ]
+
+    # Fecha de emisión
     hoy = datetime.today()
     fecha_texto = f"{hoy.day} de {meses[hoy.month - 1]} de {hoy.year}"
 
+    # Traer todas las cuotas
+    cuotas = Cuota.objects.filter(prestamo=prestamo).order_by("fecha_pago")
+    numero_cuotas = cuotas.count() if cuotas.exists() else 1
+
+    # Calcular el total (principal + comision + interes de todas las cuotas)
+    totales = cuotas.aggregate(
+        total_principal=Sum("principal"),
+        total_comision=Sum("comision"),
+        total_interes=Sum("interes"),
+    )
+    total_prestamo = (
+        (totales["total_principal"] or 0) +
+        (totales["total_comision"] or 0) +
+        (totales["total_interes"] or 0)
+    )
+
+    # Calcular cuota quincenal
+    cuota_quincenal = round(total_prestamo / numero_cuotas, 2)
+
+    # Fechas de inicio y fin
+    fecha_inicio_texto = (
+        f"{cuotas.first().fecha_pago.day} de {meses[cuotas.first().fecha_pago.month - 1]} de {cuotas.first().fecha_pago.year}"
+        if cuotas.exists() else ''
+    )
+    fecha_fin_texto = (
+        f"{cuotas.last().fecha_pago.day} de {meses[cuotas.last().fecha_pago.month - 1]} de {cuotas.last().fecha_pago.year}"
+        if cuotas.exists() else ''
+    )
+
     # Monto en letras
-    monto_letras = num2words(prestamo.monto, lang="es").capitalize() + " dólares"
+    monto_letras = num2words(total_prestamo, lang="es").capitalize() + " dólares netos"
 
     context = {
         "prestamo": prestamo,
         "trabajador": prestamo.trabajador,
         "fecha_texto": fecha_texto,
         "ciudad": prestamo.trabajador.campus,
+        "monto_total": total_prestamo,        # <<-- ya suma 366
         "monto_letras": monto_letras,
+        "cuota_quincenal": cuota_quincenal,   # <<-- 45.75
+        "fecha_inicio_texto": fecha_inicio_texto,
+        "fecha_fin_texto": fecha_fin_texto,
     }
 
-    html_string = render_to_string(f"prestamos/pdf_{tipo}.html", context)
+    # Renderizar template del Pagaré
+    html_string = render_to_string("prestamos/pdf_pagare.html", context)
 
     pdf_file = HTML(string=html_string).write_pdf(
         stylesheets=[CSS(string="""
-            @page { size: A4; margin: 20mm; }
+            @page { size: A4 landscape; margin: 20mm; }
             body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.6; }
             h1, h2, h3 { text-align: center; }
             .firma { margin-top: 50px; text-align: center; }
@@ -411,47 +447,107 @@ def prestamo_documento_pdf(request, pk, tipo):
     )
 
     response = HttpResponse(pdf_file, content_type="application/pdf")
-    response['Content-Disposition'] = f'attachment; filename={tipo}_prestamo_{prestamo.id}.pdf'
+    response['Content-Disposition'] = f'attachment; filename=pagare_prestamo_{prestamo.id}.pdf'
     return response
+
+from django.shortcuts import get_object_or_404
+from django.db.models import Sum
+from django.http import HttpResponse
+from decimal import Decimal
+from num2words import num2words
+from datetime import date
+import weasyprint
 
 def imprimir_documento(request, prestamo_id):
     prestamo = get_object_or_404(Prestamo, pk=prestamo_id)
-
     tipo = request.GET.get("tipo")
-    if tipo not in ["solicitud", "recibo", "pagare"]:
-        return HttpResponse("❌ Tipo de documento inválido")
 
-    # Generar fecha y monto en letras
+    if tipo not in ["solicitud", "recibo", "pagare"]:
+        return HttpResponse("❌ Tipo de documento inválido", status=400)
+
+    # Meses en español
     meses = [
         "enero", "febrero", "marzo", "abril", "mayo", "junio",
         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
     ]
+
+    # Fecha de emisión
     hoy = datetime.today()
-    dia = hoy.day
-    mes = meses[hoy.month - 1]
-    anio = hoy.year
-    fecha_texto = f"{dia} de {mes} de {anio}"
+    fecha_texto = f"{hoy.day} de {meses[hoy.month - 1]} de {hoy.year}"
 
-    monto_letras = num2words(prestamo.monto, lang="es").capitalize() + " dólares"
+    # Obtener cuotas relacionadas (ordenadas por fecha)
+    cuotas = prestamo.cuotas.all().order_by('fecha_pago')
+    numero_cuotas = cuotas.count() if cuotas.exists() else 1
 
+    # =========================
+    # Monto total: para pagaré sumar todas las cuotas (principal + comision + interes)
+    # =========================
+    if tipo == "pagare":
+        totales = cuotas.aggregate(
+            total_principal=Sum("principal"),
+            total_comision=Sum("comision"),
+            total_interes=Sum("interes"),
+        )
+        tp = totales.get("total_principal") or Decimal("0")
+        tc = totales.get("total_comision") or Decimal("0")
+        ti = totales.get("total_interes") or Decimal("0")
+
+        # Asegurar Decimal y redondeo a 2 decimales
+        monto_total = (Decimal(tp) + Decimal(tc) + Decimal(ti)).quantize(Decimal("0.01"), ROUND_HALF_UP)
+    else:
+        # Para solicitud/recibo usare el monto guardado en Prestamo
+        monto_total = Decimal(prestamo.monto).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+    # =========================
+    # Calcular cuota quincenal (total / número de cuotas)
+    # =========================
+    cuota_quincenal = (monto_total / Decimal(numero_cuotas)).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+    # =========================
+    # Fechas inicio y fin (usar primera y última cuota reales si existen)
+    # =========================
+    if cuotas.exists():
+        fecha_inicio = cuotas.first().fecha_pago
+        fecha_fin = cuotas.last().fecha_pago
+        fecha_inicio_texto = f"{fecha_inicio.day} de {meses[fecha_inicio.month - 1]} de {fecha_inicio.year}"
+        fecha_fin_texto = f"{fecha_fin.day} de {meses[fecha_fin.month - 1]} de {fecha_fin.year}"
+    else:
+        fecha_inicio_texto = fecha_texto
+        fecha_fin_texto = fecha_texto
+
+    # =========================
+    # Monto en letras (manejo de centavos)
+    # =========================
+    entero = int(monto_total)
+    centavos = int((monto_total - Decimal(entero)) * 100)
+    if centavos:
+        letras = f"{num2words(entero, lang='es').upper()} CON {num2words(centavos, lang='es').upper()} CENTAVOS DÓLARES NETOS"
+    else:
+        letras = f"{num2words(entero, lang='es').upper()} DÓLARES NETOS"
+
+    # =========================
+    # Contexto y render
+    # =========================
     context = {
         "prestamo": prestamo,
         "trabajador": prestamo.trabajador,
         "fecha_texto": fecha_texto,
         "ciudad": prestamo.trabajador.campus,
-        "monto_letras": monto_letras,
+        "monto_total": monto_total,               # numérico: Decimal('366.00')
+        "monto_letras": letras,                   # texto: "TRESCIENTOS SESENTA Y SEIS DÓLARES NETOS"
+        "cuota_quincenal": cuota_quincenal,       # Decimal('45.75')
+        "fecha_inicio_texto": fecha_inicio_texto,
+        "fecha_fin_texto": fecha_fin_texto,
+        "numero_cuotas": numero_cuotas,
     }
 
+    # Renderizar template del documento correcto (usa pdf_pagare.html, pdf_recibo.html, etc.)
     html_string = render_to_string(f"prestamos/pdf_{tipo}.html", context)
 
-    pdf_file = HTML(string=html_string).write_pdf(
-        stylesheets=[CSS(string="""
-            @page { size: A4; margin: 20mm; }
-            body { font-family: Arial, sans-serif; font-size: 12px; line-height: 1.6; }
-            h1, h2, h3 { text-align: center; }
-            .firma { margin-top: 50px; text-align: center; }
-        """)]
-    )
+    # Mantener vertical (portrait) como pediste
+    css = CSS(string="@page { size: A4 portrait; margin: 20mm; } body { font-family: Arial, sans-serif; font-size: 12px; }")
+
+    pdf_file = HTML(string=html_string).write_pdf(stylesheets=[css])
 
     response = HttpResponse(pdf_file, content_type="application/pdf")
     response['Content-Disposition'] = f'attachment; filename={tipo}_prestamo_{prestamo.id}.pdf'

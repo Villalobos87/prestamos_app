@@ -1,28 +1,82 @@
+{% load sum_filters %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Recibo {{ prestamo.id }}</title>
-<style>
-    body { font-family: Arial, sans-serif; font-size: 12px; }
-    h1 { text-align: center; }
-    .firma { margin-top: 50px; text-align: center; }
-</style>
+    <meta charset="UTF-8">
+    <title>Recibo #{{ prestamo.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            margin: 20px;
+        }
+        .recibo {
+            border: 2px solid black;
+            padding: 15px;
+            width: 100%; /* Menos de la mitad de la hoja */
+            margin: auto;
+            text-align: left;
+        }
+        .titulo {
+            font-weight: bold;
+            font-size: 13pt;
+            text-align: center;
+            text-decoration: underline;
+            margin-bottom: 8px;
+        }
+        .cabecera {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 10pt;
+        }
+        .por {
+            font-weight: bold;
+            text-align: right;
+        }
+        .subrayado {
+            text-decoration: underline;
+        }
+        .firma {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10pt;
+        }
+        .firma div {
+            text-align: center;
+            width: 45%;
+        }
+        p {
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
-<p>No. {{ prestamo.id }}-{{ prestamo.fecha_inicio.year }}</p>
-<h1>R E C I B O</h1>
+    <div class="recibo">
+        <div class="cabecera">
+            <div></div>
+            <div>No. {{ prestamo.id }}-{% now "Y" %}</div>
+        </div>
 
-<p><strong>POR:</strong> ${{ monto_formato }}</p>
-<p><strong>Recibí de:</strong> {{ prestamo.trabajador.nombre }}</p>
-<p><strong>La cantidad de :</strong> {{ monto_letras }}</p>
-<p><strong>En Concepto de :</strong> Préstamo personal</p>
+        <div class="titulo">R E C I B O</div>
+        <div class="por">POR: ${{ prestamo.monto }}</div>
 
-<p>{{ ciudad }}, {{ fecha_texto }}</p>
+        <p>Recibí de: <strong>Yanina Orochena R.</strong></p>
+        <p>La cantidad de: <strong>{{ monto_letras }} netos</strong></p>
+        <p>
+            En concepto de: <span class="subrayado">
+                Préstamo personal de los que están guardados en caja fuerte a 
+                (<strong>{{ prestamo.trabajador.nombre }}</strong>)
+            </span>
+        </p>
 
-<div class="firma">
-_______________________________ &nbsp;&nbsp;&nbsp;&nbsp; ______________________________<br>
-Recibo
-</div>
+        <p>{{ ciudad|title }}, {{ fecha_texto }}</p> <!-- Ciudad capitalizada -->
+
+        <div class="firma">
+            <div>_________________________<br>Entregue Conforme</div>
+            <div>_________________________<br>Recibí Conforme</div>
+        </div>
+    </div>
 </body>
 </html>

@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const seleccionadas = document.querySelectorAll('#cuotas-form input[name="cuotas"]:checked');
         if (seleccionadas.length === 0) {
-            alert('❌ BRUTA, TIENES QUE MARCAR LOS TRABAJADORES.');
+            alert('❌ TIENES QUE MARCAR LOS TRABAJADORES.');
             return;
         }
         let total = 0;
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Añadir cuotas seleccionadas
         const seleccionadas = document.querySelectorAll('#cuotas-form input[name="cuotas"]:checked');
         if (seleccionadas.length === 0) {
-            alert('❌ BRUTA!!!, Tienes que marcar a los trabajadores.');
+            alert('❌ Tienes que marcar a los trabajadores.');
             return event.preventDefault();
         }
         seleccionadas.forEach(cb => {
