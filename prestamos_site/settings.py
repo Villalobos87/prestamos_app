@@ -78,4 +78,14 @@ USE_TZ = False
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Configuración de correo (Gmail institucional)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'jose.villalobos@ucc.edu.ni'          # tu correo institucional
+EMAIL_HOST_PASSWORD = 'TU_CONTRASEÑA_APP'       # contraseña de aplicación
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER            # opcional, para que sea el remitente por defecto
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

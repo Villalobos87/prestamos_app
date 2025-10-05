@@ -21,6 +21,9 @@ from weasyprint import HTML, CSS
 from .models import Prestamo
 from num2words import num2words
 from datetime import datetime, timedelta
+from django.core.mail import EmailMessage
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 
 # ======================================
@@ -552,3 +555,36 @@ def imprimir_documento(request, prestamo_id):
     response = HttpResponse(pdf_file, content_type="application/pdf")
     response['Content-Disposition'] = f'attachment; filename={tipo}_prestamo_{prestamo.id}.pdf'
     return response
+
+def enviar_correo(request, pk):
+    # Obtener el préstamo
+    prestamo = get_object_or_404(Prestamo, pk=pk)
+
+    # Generar PDF en memoria usando WeasyPrint
+    html_string = render_to_string('prestamos/prestamo_pdf.html', {'object': prestamo})
+    pdf_file = BytesIO()
+    HTML(string=html_string).write_pdf(pdf_file)
+
+    # Preparar asunto y mensaje del correo
+    asunto = f"Préstamo: {prestamo.trabajador.nombre} - ${prestamo.monto}"
+    mensaje = f"Adjunto el PDF del préstamo de {prestamo.trabajador.nombre} por ${prestamo.monto}."
+
+    # Configurar correo
+    correo = EmailMessage(
+        subject=asunto,
+        body=mensaje,
+        from_email='jose.villalobos@ucc.edu.ni',  # tu correo institucional
+        to=['jmvillalobos87@gmail.com', ''],  # destinatarios
+    )
+
+    # Adjuntar PDF
+    correo.attach(f'Prestamo_{prestamo.id}.pdf', pdf_file.getvalue(), 'application/pdf')
+
+    try:
+        correo.send(fail_silently=False)
+        # Opcional: mostrar mensaje de éxito usando messages
+        # messages.success(request, "Correo enviado correctamente.")
+        return HttpResponseRedirect(reverse('prestamos:prestamo_list'))
+    except Exception as e:
+        # En caso de error, mostrar mensaje
+        return HttpResponse(f"Error al enviar el correo: {e}")

@@ -110,5 +110,9 @@
   <a href="{% url 'prestamos:imprimir_documento' object.id %}?tipo=solicitud" class="btn btn-warning">📝 Solicitud</a>
 <a href="{% url 'prestamos:imprimir_documento' object.id %}?tipo=recibo" class="btn btn-success">💰 Recibo</a>
 <a href="{% url 'prestamos:imprimir_documento' object.id %}?tipo=pagare" class="btn btn-info">📜 Pagaré</a>
+
+<!-- Nuevo botón de correo -->
+  <a href="{% url 'prestamos:enviar_correo' object.id %}" class="btn btn-dark">✉️ Correo</a>
 </div>
+
 {% endblock %}

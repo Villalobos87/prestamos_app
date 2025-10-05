@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 from .views import PrestamoUpdateView
 from .views import cuotas_masivo_pdf
+from django.contrib.auth import views as auth_views
+from django.urls import path, include
 
 
 app_name = "prestamos"
@@ -25,5 +27,7 @@ urlpatterns = [
     path('prestamo/<int:pk>/pdf/<str:tipo>/', views.prestamo_documento_pdf, name='prestamo_documento_pdf'),
 
     path('<int:prestamo_id>/imprimir/', views.imprimir_documento, name='imprimir_documento'),
+
+    path('prestamo/<int:pk>/enviar_correo/', views.enviar_correo, name='enviar_correo'),
 
 ]
