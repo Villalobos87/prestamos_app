@@ -8,9 +8,11 @@ from django.contrib import admin
 from prestamos import views as prestamos_views
 from django.shortcuts import redirect
 
+app_name = "prestamos"  # Muy importante para usar namespace en templates y redirecciones
 
-
-app_name = "prestamos"  # muy importante para usar namespace
+# Nota: home_redirect normalmente se usa en el urls.py del proyecto principal, no en la app
+def home_redirect(request):
+    return redirect("prestamos:login")  # Redirige a login usando el namespace
 
 urlpatterns = [
     # Login
@@ -29,9 +31,9 @@ urlpatterns = [
     # PDFs y documentos
     path("prestamo/<int:pk>/pdf/", views.prestamo_pdf, name="prestamo_pdf"),
     path("cuotas/pdf/", cuotas_masivo_pdf, name="cuotas_masivo_pdf"),
-    path('prestamo/<int:pk>/pdf/<str:tipo>/', views.prestamo_documento_pdf, name='prestamo_documento_pdf'),
-    path('<int:prestamo_id>/imprimir/', views.imprimir_documento, name='imprimir_documento'),
-    path('prestamo/<int:pk>/enviar_correo/', views.enviar_correo, name='enviar_correo'),
+    path("prestamo/<int:pk>/pdf/<str:tipo>/", views.prestamo_documento_pdf, name="prestamo_documento_pdf"),
+    path("<int:prestamo_id>/imprimir/", views.imprimir_documento, name="imprimir_documento"),
+    path("prestamo/<int:pk>/enviar_correo/", views.enviar_correo, name="enviar_correo"),
 
     # Cancelar cuotas
     path("cancelar-cuotas-masivo/", views.cancelar_cuotas_masivo, name="cancelar_cuotas_masivo"),
