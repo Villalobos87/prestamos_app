@@ -598,7 +598,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('prestamos:prestamo_list')  # después del login
+            return redirect('prestamos:prestamo_list')  # namespace correcto
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
     return render(request, 'prestamos/accounts/login.html')

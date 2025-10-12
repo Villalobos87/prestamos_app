@@ -79,6 +79,7 @@ USE_TZ = False
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"  # carpeta donde Django copiará todos los archivos estáticos
 
 # Configuración de correo (Gmail institucional)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
