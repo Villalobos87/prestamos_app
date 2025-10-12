@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -91,5 +92,5 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER            # opcional, para que sea el remi
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Redirección después del login/logout
-LOGIN_REDIRECT_URL = '/prestamos/'      # o la página principal de tu sistema
-LOGOUT_REDIRECT_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = 'prestamos:prestamo_list'      # o la página principal de tu sistema
+LOGOUT_REDIRECT_URL = 'prestamos:login'
