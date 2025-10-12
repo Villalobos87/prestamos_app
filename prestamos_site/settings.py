@@ -101,9 +101,9 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASS", "TU_CONTRASEÑA_APP")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # --- LOGIN / LOGOUT ---
-LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "prestamos:prestamo_list"   # después del login
-LOGOUT_REDIRECT_URL = "prestamos:login"
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/prestamos/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # --- SESSION & COOKIES (útil para producción) ---
 SESSION_COOKIE_SECURE = not DEBUG

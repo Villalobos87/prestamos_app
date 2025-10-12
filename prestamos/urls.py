@@ -4,17 +4,13 @@ from .views import PrestamoUpdateView, cuotas_masivo_pdf
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
 
-app_name = "prestamos"  # Muy importante para usar namespace
+app_name = "prestamos"  # namespace
 
-# Redirección a login desde la raíz de la app (opcional)
+# Redirección a login desde la raíz de la app
 def home_redirect(request):
     return redirect("prestamos:login")
 
 urlpatterns = [
-    # Login / Logout
-    path('accounts/login/', views.login_view, name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(next_page='prestamos:login'), name='logout'),
-
     # Trabajadores
     path("trabajadores/", views.TrabajadorListView.as_view(), name="trabajador_list"),
     path("trabajadores/nuevo/", views.TrabajadorCreateView.as_view(), name="trabajador_create"),
@@ -34,6 +30,10 @@ urlpatterns = [
 
     # Cancelar cuotas
     path("cancelar-cuotas-masivo/", views.cancelar_cuotas_masivo, name="cancelar_cuotas_masivo"),
+
+    # Login y Logout
+    path("login/", views.login_view, name="login"),  # tu vista de login
+    path("logout/", auth_views.LogoutView.as_view(next_page="prestamos:login"), name="logout"),
 
     # Redirección opcional desde la raíz de la app
     path("", home_redirect, name="home_redirect"),
