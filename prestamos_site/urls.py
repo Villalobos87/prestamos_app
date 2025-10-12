@@ -9,5 +9,5 @@ def home_redirect(request):
 urlpatterns = [
     path('', home_redirect, name='home'),       # raíz
     path('admin/', admin.site.urls),            # admin
-    path('prestamos/', include('prestamos.urls', namespace='prestamos')),  # incluye app con namespace
+    path('', include('prestamos.urls', namespace='prestamos')),  # incluye app con namespace
 ]
