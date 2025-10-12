@@ -26,6 +26,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import AccessMixin
 
 
 # ======================================
@@ -602,6 +603,16 @@ def login_view(request):
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
     return render(request, 'prestamos/accounts/login.html')
+
+class LoginRequiredMessageMixin(AccessMixin):
+    """Muestra un mensaje en lugar de redirigir si el usuario no está autenticado."""
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return render(request, "prestamos/acceso_denegado.html")
+        return super().dispatch(request, *args, **kwargs)
+    
+
+
 
 
 
