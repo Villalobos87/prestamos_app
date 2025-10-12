@@ -27,35 +27,39 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import AccessMixin
+from django.contrib.auth.decorators import login_required
 
 
 # ======================================
 # Trabajador Views
 # ======================================
-class TrabajadorListView(ListView):
+class TrabajadorListView(LoginRequiredMixin, ListView):
     model = Trabajador
     template_name = "prestamos/trabajador_list.html"
     context_object_name = "items"
     filterset_class = TrabajadorFilter
+    login_url = settings.LOGIN_URL
 
 
-class TrabajadorCreateView(CreateView):
+class TrabajadorCreateView(LoginRequiredMixin, CreateView):
     model = Trabajador
     form_class = TrabajadorForm
     success_url = reverse_lazy("prestamos:trabajador_list")
     template_name = "prestamos/trabajador_form.html"
+    login_url = settings.LOGIN_URL
 
 
 # ======================================
 # Prestamo Views
 # ======================================
-class PrestamoListView(ListView):
+class PrestamoListView(LoginRequiredMixin, ListView):
     model = Prestamo
     template_name = "prestamos/prestamo_list.html"
     context_object_name = "items"
     queryset = Prestamo.objects.select_related("trabajador").all()
     ordering = ['-id']
     filterset_class = PrestamoFilter
+    login_url = settings.LOGIN_URL
 
 
 # ======================================
@@ -116,10 +120,11 @@ def generar_cuotas(prestamo):
 # ======================================
 # Crear Prestamo
 # ======================================
-class PrestamoCreateView(CreateView):
+class PrestamoCreateView(LoginRequiredMixin, CreateView):
     model = Prestamo
     form_class = PrestamoForm
     template_name = "prestamos/prestamo_form.html"
+    login_url = settings.LOGIN_URL
 
     def get_initial(self):
         initial = super().get_initial()
@@ -159,9 +164,10 @@ class PrestamoCreateView(CreateView):
 # ======================================
 # Detalle Prestamo
 # ======================================
-class PrestamoDetailView(DetailView):
+class PrestamoDetailView(LoginRequiredMixin, DetailView):
     model = Prestamo
     template_name = "prestamos/prestamo_detail.html"
+    login_url = settings.LOGIN_URL
 
     def get_queryset(self):
         return Prestamo.objects.select_related("trabajador").prefetch_related("cuotas")
@@ -205,10 +211,11 @@ class PrestamoDetailView(DetailView):
 # ======================================
 # Editar Prestamo
 # ======================================
-class PrestamoUpdateView(UpdateView):
+class PrestamoUpdateView(LoginRequiredMixin, UpdateView):
     model = Prestamo
     form_class = PrestamoForm
     template_name = "prestamos/prestamo_form.html"
+    login_url = settings.LOGIN_URL
 
     def get_success_url(self):
         return reverse_lazy("prestamos:prestamo_detail", kwargs={"pk": self.object.pk})
@@ -236,6 +243,8 @@ class PrestamoUpdateView(UpdateView):
 # Cancelar / Modificar Cuotas Masivas
 # ======================================
 @transaction.atomic
+
+@login_required(login_url=settings.LOGIN_URL)
 def cancelar_cuotas_masivo(request):
     cuotas = []
     total = 0
@@ -324,6 +333,7 @@ def cancelar_cuotas_masivo(request):
         }
     )
 
+@login_required(login_url=settings.LOGIN_URL)
 def prestamo_pdf(request, pk):
     prestamo = Prestamo.objects.get(pk=pk)
     html = render_to_string("prestamos/prestamo_pdf.html", {"object": prestamo})
@@ -335,6 +345,7 @@ def prestamo_pdf(request, pk):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
+@login_required(login_url=settings.LOGIN_URL)
 def cuotas_masivo_pdf(request):
     seleccionadas = request.POST.getlist("cuotas")
 
@@ -380,6 +391,7 @@ def cuotas_masivo_pdf(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
+@login_required(login_url=settings.LOGIN_URL)
 def prestamo_documento_pdf(request, pk, tipo):
     prestamo = get_object_or_404(Prestamo, pk=pk)
     
@@ -456,14 +468,7 @@ def prestamo_documento_pdf(request, pk, tipo):
     response['Content-Disposition'] = f'attachment; filename=pagare_prestamo_{prestamo.id}.pdf'
     return response
 
-from django.shortcuts import get_object_or_404
-from django.db.models import Sum
-from django.http import HttpResponse
-from decimal import Decimal
-from num2words import num2words
-from datetime import date
-import weasyprint
-
+@login_required(login_url=settings.LOGIN_URL)
 def imprimir_documento(request, prestamo_id):
     prestamo = get_object_or_404(Prestamo, pk=prestamo_id)
     tipo = request.GET.get("tipo")
@@ -559,6 +564,7 @@ def imprimir_documento(request, prestamo_id):
     response['Content-Disposition'] = f'attachment; filename={tipo}_prestamo_{prestamo.id}.pdf'
     return response
 
+@login_required(login_url=settings.LOGIN_URL)
 def enviar_correo(request, pk):
     # Obtener el préstamo
     prestamo = get_object_or_404(Prestamo, pk=pk)
@@ -611,11 +617,6 @@ class LoginRequiredMessageMixin(AccessMixin):
             return render(request, "prestamos/acceso_denegado.html")
         return super().dispatch(request, *args, **kwargs)
     
-class PrestamoListView(LoginRequiredMixin, ListView):
-    model = Prestamo
-    template_name = "prestamos/prestamo_list.html"
-    context_object_name = "items"  # Ahora el template usa {% for p in items %}
-    login_url = "prestamos:login"  # Redirige al login si no está autenticado
     
 
 

@@ -3,6 +3,7 @@ from . import views
 from .views import PrestamoUpdateView, cuotas_masivo_pdf
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
+from .views import login_view
 
 app_name = "prestamos"  # namespace
 
@@ -32,9 +33,9 @@ urlpatterns = [
     path("cancelar-cuotas-masivo/", views.cancelar_cuotas_masivo, name="cancelar_cuotas_masivo"),
 
     # Login y Logout
-    path("login/", views.login_view, name="login"),  # tu vista de login
+    path('accounts/login/', login_view, name='login'),
     path("logout/", auth_views.LogoutView.as_view(next_page="prestamos:login"), name="logout"),
 
-    # Redirección opcional desde la raíz de la app
+    # Redirección raíz de la app
     path("", home_redirect, name="home_redirect"),
 ]
