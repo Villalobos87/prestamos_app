@@ -24,6 +24,8 @@ from datetime import datetime, timedelta
 from django.core.mail import EmailMessage
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 # ======================================
@@ -588,3 +590,18 @@ def enviar_correo(request, pk):
     except Exception as e:
         # En caso de error, mostrar mensaje
         return HttpResponse(f"Error al enviar el correo: {e}")
+    
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('prestamos:prestamo_list')  # después del login
+        else:
+            messages.error(request, 'Usuario o contraseña incorrectos.')
+    return render(request, 'prestamos/accounts/login.html')
+
+
+

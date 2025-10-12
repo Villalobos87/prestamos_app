@@ -89,3 +89,7 @@ EMAIL_HOST_PASSWORD = 'TU_CONTRASEÑA_APP'       # contraseña de aplicación
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER            # opcional, para que sea el remitente por defecto
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Redirección después del login/logout
+LOGIN_REDIRECT_URL = '/dashboard/'      # o la página principal de tu sistema
+LOGOUT_REDIRECT_URL = '/accounts/login/'

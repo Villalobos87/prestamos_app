@@ -2,11 +2,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 
-def home(_):
-    return redirect("prestamos:prestamo_list")
+# Redirige la raíz al login
+def home_redirect(request):
+    return redirect('prestamos:login')  # namespace 'prestamos' + name 'login'
 
 urlpatterns = [
-    path("", home, name="home"),
-    path("admin/", admin.site.urls),
-    path("", include("prestamos.urls")),
+    path('', home_redirect, name='home'),       # raíz
+    path('admin/', admin.site.urls),            # admin
+    path('prestamos/', include('prestamos.urls', namespace='prestamos')),  # incluye app con namespace
 ]
