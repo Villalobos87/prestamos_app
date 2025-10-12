@@ -2,12 +2,14 @@ from pathlib import Path
 import os
 from django.urls import reverse_lazy
 
+# --- BASE ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
 DEBUG = os.environ.get("DEBUG", "1") == "1"
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*"]  # Ajusta esto en producción a tu dominio
 
+# --- APPS ---
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -16,10 +18,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "prestamos",
-    'widget_tweaks',
+    "widget_tweaks",
     "django_filters",
 ]
 
+# --- MIDDLEWARE ---
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -30,12 +33,14 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# --- URLS ---
 ROOT_URLCONF = "prestamos_site.urls"
 
+# --- TEMPLATES ---
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "templates"],  # carpeta de templates globales
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -50,21 +55,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "prestamos_site.wsgi.application"
 
-# Database: PostgreSQL via env vars; fallback to SQLite for quick start
+# --- BASE DE DATOS ---
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "djangocrud_har8",
-        "USER": "djangouser",
-        "PASSWORD": "mHihqeccaRH1CMjB4jJZj1wZSVwHoO8j",
-        "HOST": "dpg-d27r7r63jp1c73fllgr0-a.oregon-postgres.render.com",
-        "PORT": "5432",
-        "OPTIONS": {
-            "sslmode": "require",   # Render requiere SSL
-        },
+        "NAME": os.environ.get("DB_NAME", "djangocrud_har8"),
+        "USER": os.environ.get("DB_USER", "djangouser"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "mHihqeccaRH1CMjB4jJZj1wZSVwHoO8j"),
+        "HOST": os.environ.get("DB_HOST", "dpg-d27r7r63jp1c73fllgr0-a.oregon-postgres.render.com"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
+        "OPTIONS": {"sslmode": "require"},
     }
 }
 
+# --- VALIDACIÓN DE CONTRASEÑAS ---
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -72,26 +76,38 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# --- LOCALIZACIÓN ---
 LANGUAGE_CODE = "es-ni"
 TIME_ZONE = "America/Managua"
 USE_I18N = True
 USE_TZ = False
 
+# --- STATIC FILES ---
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"  # carpeta donde Django copiará todos los archivos estáticos
+STATICFILES_DIRS = [BASE_DIR / "static"]  # donde están tus archivos estáticos locales
+STATIC_ROOT = BASE_DIR / "staticfiles"    # destino de collectstatic en producción
 
-# Configuración de correo (Gmail institucional)
+# --- MEDIA FILES ---
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# --- EMAIL (GMAIL INSTITUCIONAL) ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'jose.villalobos@ucc.edu.ni'          # tu correo institucional
-EMAIL_HOST_PASSWORD = 'TU_CONTRASEÑA_APP'       # contraseña de aplicación
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER            # opcional, para que sea el remitente por defecto
+EMAIL_HOST_USER = os.environ.get("EMAIL_USER", "tu_correo@ejemplo.com")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASS", "TU_CONTRASEÑA_APP")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+# --- LOGIN / LOGOUT ---
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "prestamos:prestamo_list"   # después del login
+LOGOUT_REDIRECT_URL = "prestamos:login"
+
+# --- SESSION & COOKIES (útil para producción) ---
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+# --- AUTO FIELD POR DEFECTO ---
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Redirección después del login/logout
-LOGIN_REDIRECT_URL = 'prestamos:prestamo_list'      # o la página principal de tu sistema
-LOGOUT_REDIRECT_URL = 'prestamos:login'
