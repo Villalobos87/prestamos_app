@@ -611,6 +611,12 @@ class LoginRequiredMessageMixin(AccessMixin):
             return render(request, "prestamos/acceso_denegado.html")
         return super().dispatch(request, *args, **kwargs)
     
+class PrestamoListView(LoginRequiredMixin, ListView):
+    model = Prestamo
+    template_name = "prestamos/prestamo_list.html"
+    context_object_name = "items"  # Ahora el template usa {% for p in items %}
+    login_url = "prestamos:login"  # Redirige al login si no está autenticado
+    
 
 
 
