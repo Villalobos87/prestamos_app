@@ -91,5 +91,5 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER            # opcional, para que sea el remi
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Redirección después del login/logout
-LOGIN_REDIRECT_URL = '/dashboard/'      # o la página principal de tu sistema
+LOGIN_REDIRECT_URL = '/prestamos/'      # o la página principal de tu sistema
 LOGOUT_REDIRECT_URL = '/accounts/login/'
