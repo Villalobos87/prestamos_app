@@ -7,6 +7,6 @@ services:
     branch: main
     rootDir: .
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn prestamos_site.wsgi
+    startCommand: gunicorn prestamos_site.wsgi:application
     autoDeploy: true
     pythonVersion: "3.13"
