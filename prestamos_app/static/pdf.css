@@ -1,0 +1,19 @@
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    margin: 20px;
+}
+
+h1, h4 {
+    margin-bottom: 10px;
+}
+
+.table {
+    font-size: 11px;
+}
+
+.table th, .table td {
+    padding: 6px;
+    text-align: center;
+    vertical-align: middle;
+}
