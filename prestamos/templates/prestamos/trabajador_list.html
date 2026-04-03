@@ -2,10 +2,70 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h3>Trabajadores</h3>
+  <h2 class="fw-bold mb-0">🧑‍💼 Trabajadores</h2>
   <a href="{% url 'prestamos:trabajador_create' %}" class="btn btn-success">
     ➕ Nuevo
   </a>
+</div>
+
+<div class="row mb-3">
+
+  <!-- TOTAL -->
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm rounded-4"
+         style="background: linear-gradient(135deg, #6c757d, #adb5bd); color:white;">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <small>Total Trabajadores</small>
+          <h3 class="fw-bold mb-0">{{ total_trabajadores }}</h3>
+        </div>
+        <div style="font-size:40px; opacity:0.3;">👥</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEON -->
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm rounded-4"
+         style="background: linear-gradient(135deg, #198754, #20c997); color:white;">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <small>León</small>
+          <h3 class="fw-bold mb-0">{{ total_leon }}</h3>
+        </div>
+        <div style="font-size:40px; opacity:0.3;">📍</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGUA -->
+<div class="col-md-3">
+  <div class="card border-0 shadow-sm rounded-4"
+       style="background: linear-gradient(135deg, #0d6efd, #084298); color:white;">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <small>Managua</small>
+        <h3 class="fw-bold mb-0">{{ total_managua }}</h3>
+      </div>
+      <div style="font-size:40px; opacity:0.3;">🏙️</div>
+    </div>
+  </div>
+</div>
+
+  <!-- MATAGALPA -->
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm rounded-4"
+         style="background: linear-gradient(135deg, #6f42c1, #9b6dff); color:white;">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <small>Matagalpa</small>
+          <h3 class="fw-bold mb-0">{{ total_matagalpa }}</h3>
+        </div>
+        <div style="font-size:40px; opacity:0.3;">🌄</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Tabla de trabajadores -->

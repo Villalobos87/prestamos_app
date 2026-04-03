@@ -1,10 +1,56 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h3>Préstamos</h3>
+  <h2 class="fw-bold mb-0">💰 Préstamos</h2>
   <a href="{% url 'prestamos:prestamo_create' %}" class="btn btn-success">
     ➕ Nuevo
   </a>
+</div>
+
+<div class="row mb-3">
+
+  <!-- TOTAL -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm rounded-4"
+         style="background: linear-gradient(135deg, #198754, #20c997); color:white;">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <small class="opacity-75">Total filtrado</small>
+          <h3 class="fw-bold mb-0" id="totalMonto">$0.00</h3>
+        </div>
+        <div style="font-size:40px; opacity:0.3;">💰</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANTIDAD -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm rounded-4"
+         style="background: linear-gradient(135deg, #0d6efd, #084298); color:white;">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <small class="opacity-75">Cantidad filtrada</small>
+          <h3 class="fw-bold mb-0" id="totalCantidad">0</h3>
+        </div>
+        <div style="font-size:40px; opacity:0.3;">📊</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROMEDIO -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm rounded-4"
+         style="background: linear-gradient(135deg, #6f42c1, #9b6dff); color:white;">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <small class="opacity-75">Promedio</small>
+          <h3 class="fw-bold mb-0" id="totalPromedio">$0.00</h3>
+        </div>
+        <div style="font-size:40px; opacity:0.3;">📈</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="card shadow-sm">
@@ -43,7 +89,11 @@
                 </a>
               </td>
               <td class="text-nowrap">{{ p.trabajador.nombre }}</td>
-              <td class="text-nowrap">{{ p.monto }}</td>
+              <td class="text-nowrap" data-order="{{ p.monto }}">
+  <span class="badge rounded-pill bg-light text-dark shadow-sm px-3 py-2 fs-6">
+    ${{ p.monto|floatformat:2 }}
+  </span>
+</td>
               <td class="text-nowrap">{{ p.interes }}</td>
               <td class="text-nowrap">{{ p.comision }}</td>
               <td class="text-nowrap">{{ p.plazo }}</td>
@@ -75,6 +125,7 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
+
 $(document).ready(function () {
   // Inicializar DataTable
   var table = $('#prestamosTable').DataTable({
@@ -95,6 +146,47 @@ $(document).ready(function () {
       }
     });
   });
+  // 🔥 KPI DINÁMICOS
+  function actualizarKPIs() {
+    let total = 0;
+    let cantidad = 0;
+
+    table.rows({ search: 'applied' }).every(function () {
+      let data = this.data();
+
+      // columna MONTO = índice 2
+      let montoTexto = data[2];
+
+// Crear un elemento temporal para leer el texto limpio
+let temp = document.createElement("div");
+temp.innerHTML = montoTexto;
+
+let textoLimpio = temp.textContent || temp.innerText || "";
+
+let monto = parseFloat(
+  $(this.node()).find('td').eq(2).data('order')
+) || 0;
+
+      total += monto;
+      cantidad++;
+    });
+
+    let promedio = cantidad > 0 ? (total / cantidad) : 0;
+
+    // actualizar
+    $('#totalMonto').text('$' + total.toLocaleString('en-US', {minimumFractionDigits: 2}));
+    $('#totalCantidad').text(cantidad);
+    $('#totalPromedio').text('$' + promedio.toLocaleString('en-US', {minimumFractionDigits: 2,maximumFractionDigits: 2}));
+  }
+
+  // ejecutar
+  actualizarKPIs();
+
+  table.on('draw', function () {
+    actualizarKPIs();
+  });
+
 });
 </script>
+
 {% endblock %}

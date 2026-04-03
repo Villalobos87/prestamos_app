@@ -37,8 +37,24 @@ class TrabajadorListView(LoginRequiredMixin, ListView):
     model = Trabajador
     template_name = "prestamos/trabajador_list.html"
     context_object_name = "items"
-    filterset_class = TrabajadorFilter
     login_url = settings.LOGIN_URL
+
+    def get_queryset(self):
+        return Trabajador.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        trabajadores = self.get_queryset()
+
+        context.update({
+            'total_trabajadores': trabajadores.count(),
+            'total_leon': trabajadores.filter(campus__icontains="león").count(),
+            'total_managua': trabajadores.filter(campus__icontains="managua").count(),
+            'total_matagalpa': trabajadores.filter(campus__icontains="matagalpa").count(),
+        })
+
+        return context
 
 
 class TrabajadorCreateView(LoginRequiredMixin, CreateView):
