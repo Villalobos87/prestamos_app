@@ -259,13 +259,15 @@ class PrestamoUpdateView(LoginRequiredMixin, UpdateView):
 # Cancelar / Modificar Cuotas Masivas
 # ======================================
 @transaction.atomic
-
 @login_required(login_url=settings.LOGIN_URL)
 def cancelar_cuotas_masivo(request):
+
     cuotas = []
     total = 0
-    mensaje_info = ""
 
+    # ===================
+    # POST (acciones)
+    # ===================
     if request.method == "POST":
         seleccionadas = request.POST.getlist("cuotas")
         accion = request.POST.get("accion")
@@ -276,10 +278,8 @@ def cancelar_cuotas_masivo(request):
         if seleccionadas:
             cuotas_seleccionadas = Cuota.objects.filter(pk__in=seleccionadas, estado="Pendiente")
             total_seleccionado = sum(c.monto_total for c in cuotas_seleccionadas)
-            mensaje_info = f"⚠ Se van a procesar {cuotas_seleccionadas.count()} cuota(s) con un total pendiente de ${total_seleccionado:.2f}."
 
-            # Mostramos mensaje informativo antes de aplicar acción
-            messages.info(request, mensaje_info)
+            messages.info(request, f"⚠ Se procesarán {cuotas_seleccionadas.count()} cuotas por ${total_seleccionado:.2f}")
 
             for cuota in cuotas_seleccionadas:
                 if accion == "cancelar":
@@ -287,31 +287,80 @@ def cancelar_cuotas_masivo(request):
                     if cheque_valor:
                         cuota.cheque = cheque_valor
                     cuota.save(update_fields=["estado", "cheque"])
+
                 elif accion == "modificar_fecha":
                     if nueva_fecha:
                         cuota.fecha_pago = nueva_fecha
                         cuota.motivo = observacion
                         cuota.save(update_fields=["fecha_pago"])
-            messages.success(request, "✅ Acciones aplicadas a las cuotas seleccionadas.")
+
+            messages.success(request, "✅ Acciones aplicadas.")
             return redirect("prestamos:cancelar_cuotas_masivo")
         else:
-            messages.error(request, "❌ No seleccionaste ninguna cuota.")
+            messages.error(request, "❌ No seleccionaste cuotas.")
 
     # ===================
-    # Filtro GET
+    # GET (filtros)
     # ===================
     fecha = request.GET.get("fecha")
     campus = request.GET.get("campus", "")
+
+    cuotas = Cuota.objects.none()
+    total = 0
+
     if fecha:
         cuotas = Cuota.objects.filter(fecha_pago=fecha, estado="Pendiente")
+
         if campus:
             cuotas = cuotas.filter(prestamo__trabajador__campus=campus)
+
         cuotas = cuotas.select_related("prestamo", "prestamo__trabajador")
         total = sum(c.monto_total for c in cuotas)
-    else:
-        cuotas = []
-        total = 0
 
+    # ===================
+    # 🔥 RESUMEN OPTIMIZADO (RÁPIDO)
+    # ===================
+    from django.db.models import Sum
+    from collections import defaultdict
+
+    resumen = defaultdict(lambda: {
+        "León": 0,
+        "Managua": 0,
+        "Matagalpa": 0,
+        "total": 0,
+    })
+
+    datos = (
+        Cuota.objects
+        .filter(estado="Pendiente")
+        .values("fecha_pago", "prestamo__trabajador__campus")
+        .annotate(total_monto=Sum("monto_total"))
+        .order_by("fecha_pago")
+    )
+
+    for d in datos:
+        fecha_key = d["fecha_pago"]
+        campus_nombre = (d["prestamo__trabajador__campus"] or "").strip().lower()
+        monto = float(d["total_monto"] or 0)
+
+        # Normalizar nombres (CLAVE 🔥)
+        if "león" in campus_nombre:
+            campus_nombre = "León"
+        elif "managua" in campus_nombre:
+            campus_nombre = "Managua"
+        elif "matagalpa" in campus_nombre:
+            campus_nombre = "Matagalpa"
+        else:
+            continue  # ignora otros valores raros
+
+        resumen[fecha_key][campus_nombre] += monto
+        resumen[fecha_key]["total"] += monto
+
+    resumen_ordenado = dict(resumen)
+
+    # ===================
+    # RENDER
+    # ===================
     return render(
         request,
         "prestamos/cancelar_cuotas_masivo.html",
@@ -320,34 +369,10 @@ def cancelar_cuotas_masivo(request):
             "fecha": fecha,
             "campus": campus,
             "total": total,
+            "resumen": resumen_ordenado,
         }
     )
 
-    # ===================
-    # Filtro GET
-    # ===================
-    fecha = request.GET.get("fecha")
-    campus = request.GET.get("campus", "")
-    if fecha:
-        cuotas = Cuota.objects.filter(fecha_pago=fecha, estado="Pendiente")
-        if campus:
-            cuotas = cuotas.filter(prestamo__trabajador__campus=campus)
-        cuotas = cuotas.select_related("prestamo", "prestamo__trabajador")
-        total = sum(c.monto_total for c in cuotas)
-    else:
-        cuotas = []
-        total = 0
-
-    return render(
-        request,
-        "prestamos/cancelar_cuotas_masivo.html",
-        {
-            "cuotas": cuotas,
-            "fecha": fecha,
-            "campus": campus,
-            "total": total,
-        }
-    )
 
 @login_required(login_url=settings.LOGIN_URL)
 def prestamo_pdf(request, pk):

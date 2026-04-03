@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     "prestamos",
     "widget_tweaks",
     "django_filters",
+    "django.contrib.humanize",
 ]
 
 # --- MIDDLEWARE ---
