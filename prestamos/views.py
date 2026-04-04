@@ -28,6 +28,8 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.decorators import login_required
+from collections import defaultdict
+
 
 
 # ======================================
@@ -291,8 +293,8 @@ def cancelar_cuotas_masivo(request):
                 elif accion == "modificar_fecha":
                     if nueva_fecha:
                         cuota.fecha_pago = nueva_fecha
-                        cuota.motivo = observacion
-                        cuota.save(update_fields=["fecha_pago"])
+                        cuota.observacion = observacion
+                        cuota.save(update_fields=["fecha_pago", "observacion"])
 
             messages.success(request, "✅ Acciones aplicadas.")
             return redirect("prestamos:cancelar_cuotas_masivo")
@@ -318,11 +320,8 @@ def cancelar_cuotas_masivo(request):
         total = sum(c.monto_total for c in cuotas)
 
     # ===================
-    # 🔥 RESUMEN OPTIMIZADO (RÁPIDO)
+    # 🔥 RESUMEN OPTIMIZADO
     # ===================
-    from django.db.models import Sum
-    from collections import defaultdict
-
     resumen = defaultdict(lambda: {
         "León": 0,
         "Managua": 0,
@@ -341,25 +340,33 @@ def cancelar_cuotas_masivo(request):
     for d in datos:
         fecha_key = d["fecha_pago"]
         campus_nombre = (d["prestamo__trabajador__campus"] or "").strip().lower()
-        monto = float(d["total_monto"] or 0)
+        monto = d["total_monto"] or 0  # 🔥 sin float
 
-        # Normalizar nombres (CLAVE 🔥)
-        if "león" in campus_nombre:
+        if "leon" in campus_nombre or "león" in campus_nombre:
             campus_nombre = "León"
         elif "managua" in campus_nombre:
             campus_nombre = "Managua"
         elif "matagalpa" in campus_nombre:
             campus_nombre = "Matagalpa"
         else:
-            continue  # ignora otros valores raros
+            continue
 
         resumen[fecha_key][campus_nombre] += monto
         resumen[fecha_key]["total"] += monto
 
-    resumen_ordenado = dict(resumen)
+    # 🔥 ORDENAR
+    resumen_ordenado = dict(sorted(resumen.items()))
 
     # ===================
-    # RENDER
+    # 🔥 KPI TOTALES
+    # ===================
+    total_pendiente = sum(d["total"] for d in resumen_ordenado.values())
+    total_leon = sum(d["León"] for d in resumen_ordenado.values())
+    total_managua = sum(d["Managua"] for d in resumen_ordenado.values())
+    total_matagalpa = sum(d["Matagalpa"] for d in resumen_ordenado.values())
+
+    # ===================
+    # RENDER (SIN ERRORES)
     # ===================
     return render(
         request,
@@ -370,6 +377,12 @@ def cancelar_cuotas_masivo(request):
             "campus": campus,
             "total": total,
             "resumen": resumen_ordenado,
+
+            # 🔥 KPI
+            "total_pendiente": total_pendiente,
+            "total_leon": total_leon,
+            "total_managua": total_managua,
+            "total_matagalpa": total_matagalpa,
         }
     )
 
