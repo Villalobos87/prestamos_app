@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe: Disponibilidad</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary">📋 Informe: Disponibilidad</h2>
+            <a href="{% url 'list_tasks' %}" class="btn btn-secondary my-3">Volver</a>
+            <a href="{% url 'calendario_clases' %}" class="btn btn-outline-primary btn-sm">
+                📅 Ver Calendario
+            </a>
+        </div>
+
+        <div class="table-responsive shadow rounded">
+            <table class="table table-hover table-bordered text-center align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Instructor</th>
+                        <th>Hora</th>
+                        <th>Fecha Disponible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resultados %}
+                    <tr>
+                        <td>{{ item.instructor }}</td>
+                        <td>{{ item.hora }}</td>
+                        <td>
+                            {% if item.fecha_ajustada %}
+                                {{ item.fecha_ajustada|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="text-muted">No definida</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-muted">No hay datos disponibles</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

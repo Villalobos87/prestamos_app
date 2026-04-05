@@ -1,0 +1,173 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Escuela de Manejo</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'main.css' %}" />
+</head>
+<body>
+
+<div class="container-fluid mt-4 px-3">
+    <a href="{% url 'calendario_clases' %}" class="btn btn-outline-primary btn-sm mb-3" style="font-size: 0.8rem;">
+        📅 Ver Calendario
+    </a>
+
+    <a href="{% url 'informe_ultimas_fechas' %}" class="btn btn-outline-success btn-sm mb-3 ms-2" style="font-size: 0.8rem;">
+    📋 Ver Disponibilidad
+</a>
+
+    <form action="{% url 'create_task' %}" method="POST" class="card p-4 shadow-lg bg-dark text-white rounded-4 mb-4">
+        {% csrf_token %}
+        <h4 class="mb-4 text-center">Escuela de Manejo Ucc León</h4>
+
+        <div class="row mb-3">
+            <div class="col-md-6 form-floating mb-2">
+                <input type="text" name="title" id="title" class="form-control bg-secondary text-white border-0" placeholder="Nombre" required>
+                <label for="title">Nombre</label>
+            </div>
+            <div class="col-md-6 form-floating mb-2">
+                <textarea name="description" id="description" class="form-control bg-secondary text-white border-0" placeholder="Apellido" style="height: 58px;"></textarea>
+                <label for="description">Apellido</label>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6 form-floating mb-2">
+                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control bg-secondary text-white border-0" placeholder="Fecha de inicio">
+                <label for="fecha_inicio">Fecha de inicio</label>
+            </div>
+            <div class="col-md-6 form-floating mb-2">
+                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control bg-secondary text-white border-0" placeholder="Fecha de finalización">
+                <label for="fecha_fin">Fecha de finalización</label>
+            </div>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input type="time" name="hora" id="hora" class="form-control bg-secondary text-white border-0" placeholder="Hora">
+            <label for="hora">Hora</label>
+        </div>
+
+        <div class="form-floating mb-4">
+            <select name="instructor" class="form-select bg-secondary text-white border-0" id="instructor" required>
+                <option value="" selected disabled>Seleccione un instructor</option>
+                {% for instructor in instructores %}
+                    <option value="{{ instructor.id }}">{{ instructor.nombre }}</option>
+                {% endfor %}
+            </select>
+            <label for="instructor">Instructor</label>
+        </div>
+
+        <button class="btn btn-success w-100">Guardar</button>
+    </form>
+
+    {% if tasks %}
+    <table id="tasksTable" class="table table-striped table-bordered" style="width:100%">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Finalización</th>
+                <th>Hora</th>
+                <th>Instructor</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+            <tr>
+                <th><input type="text" placeholder="Buscar Nombre" class="form-control form-control-sm" /></th>
+                <th><input type="text" placeholder="Buscar Apellido" class="form-control form-control-sm" /></th>
+                <th><input type="text" placeholder="Buscar Inicio" class="form-control form-control-sm" /></th>
+                <th><input type="text" placeholder="Buscar Final" class="form-control form-control-sm" /></th>
+                <th><input type="text" placeholder="Buscar Hora" class="form-control form-control-sm" /></th>
+                <th><input type="text" placeholder="Buscar Instructor" class="form-control form-control-sm" /></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% now "Y-m-d" as hoy %}
+    {% for task in tasks %}
+    <tr
+        {% if hoy < task.fecha_inicio|date:"Y-m-d" %}
+            class="table-warning"
+        {% elif hoy <= task.fecha_fin|date:"Y-m-d" %}
+            class="table-info"
+        {% else %}
+            class="table-success"
+        {% endif %}
+    >
+        <td>{{ task.title }}</td>
+        <td>{{ task.description }}</td>
+        <td>{{ task.fecha_inicio|date:"d/m/Y" }}</td>
+        <td>{{ task.fecha_fin|date:"d/m/Y" }}</td>
+        <td>{{ task.hora }}</td>
+        <td>{{ task.instructor }}</td>
+        <td>
+            {% if hoy < task.fecha_inicio|date:"Y-m-d" %}
+                <span class="badge bg-warning text-dark">Pendiente</span>
+            {% elif hoy <= task.fecha_fin|date:"Y-m-d" %}
+                <span class="badge bg-info text-dark">En proceso</span>
+            {% else %}
+                <span class="badge bg-success">Terminado</span>
+            {% endif %}
+        </td>
+        <td>
+            <a href="{% url 'edit_task' task.id %}" class="btn btn-primary btn-sm me-1">Editar</a>
+            <form action="{% url 'delete_task' task.id %}" method="POST" style="display:inline;">
+                {% csrf_token %}
+                <button class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que quieres eliminar esta tarea?')">Eliminar</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+    </table>
+    {% else %}
+    <h3 class="text-center text-muted">No hay datos</h3>
+    {% endif %}
+</div>
+
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    const url_i18n = "{% static 'datatables/i18n/es-ES.json' %}";
+
+    $(document).ready(function() {
+        let table = $('#tasksTable').DataTable({
+            orderCellsTop: true,
+            fixedHeader: true,
+            language: {
+                url: url_i18n
+            },
+            order: [[ 0, 'asc' ]],
+            pageLength: 5,
+            initComplete: function () {
+                this.api().columns().every(function (colIdx) {
+                    if (colIdx === 6 || colIdx === 7) return;
+
+                    let input = $('thead tr:eq(1) th').eq(colIdx).find('input');
+                    if (input.length) {
+                        input.on('keyup change clear', function () {
+                            if (table.column(colIdx).search() !== this.value) {
+                                table.column(colIdx).search(this.value).draw();
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

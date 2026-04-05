@@ -6,10 +6,13 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # ✅ rutas de login/logout sin namespace
-    path('login/', prestamos_views.login_view, name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='prestamos:login'), name='logout'),
+    # 🔐 AUTH (login / logout)
+    path('', prestamos_views.login_view, name='login'),  # 👈 login en raíz
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
-    # ✅ incluye todas las URLs de préstamos
-    path('', include('prestamos.urls')),
+    # 💰 MÓDULO PRÉSTAMOS
+    path('prestamos/', include('prestamos.urls')),
+
+    # 🚗 MÓDULO ESCUELA (tasks)
+    path('escuela/', include('tasks.urls')),
 ]
