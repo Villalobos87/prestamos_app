@@ -271,11 +271,26 @@ document.addEventListener('DOMContentLoaded', () => {
 {% else %}
 
 <hr>
+<style>
+@keyframes parpadeo-suave {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.alerta-mora {
+    color: #dc3545;
+    font-weight: bold;
+    animation: parpadeo-suave 2s infinite;
+}
+</style>
+
 <h5>💰 Resumen de montos pendientes</h5>
 
 {% for fecha, datos in resumen.items %}
-    <div style="margin-bottom:5px;">
+    <div style="margin-bottom:6px;">
 
+        <!-- Semáforo -->
         {% if fecha < hoy %}
             🔴
         {% elif fecha == hoy %}
@@ -286,10 +301,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <strong>{{ fecha|date:"d/m/Y" }}</strong> →
 
-        León ${{ datos.León|floatformat:2|intcomma }} |
-        Managua ${{ datos.Managua|floatformat:2|intcomma }} |
-        Matagalpa ${{ datos.Matagalpa|floatformat:2|intcomma }} |
-        <strong>TOTAL ${{ datos.total|floatformat:2|intcomma }}</strong>
+        <!-- LEÓN -->
+        <span class="{% if fecha < hoy and datos.León > 0 %}alerta-mora{% endif %}">
+            León ${{ datos.León|floatformat:2|intcomma }}
+        </span> |
+
+        <!-- MANAGUA -->
+        <span class="{% if fecha < hoy and datos.Managua > 0 %}alerta-mora{% endif %}">
+            Managua ${{ datos.Managua|floatformat:2|intcomma }}
+        </span> |
+
+        <!-- MATAGALPA -->
+        <span class="{% if fecha < hoy and datos.Matagalpa > 0 %}alerta-mora{% endif %}">
+            Matagalpa ${{ datos.Matagalpa|floatformat:2|intcomma }}
+        </span> |
+
+        <!-- TOTAL -->
+        <strong class="{% if fecha < hoy and datos.total > 0 %}alerta-mora{% endif %}">
+            TOTAL ${{ datos.total|floatformat:2|intcomma }}
+        </strong>
     </div>
 
 {% empty %}
