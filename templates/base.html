@@ -24,9 +24,23 @@
     <div class="collapse navbar-collapse" id="navbarContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-center">
         {% if user.is_authenticated %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'prestamos:prestamo_list' %}">Préstamos</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'prestamos:trabajador_list' %}">Trabajadores</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'prestamos:cancelar_cuotas_masivo' %}">Cancelar Cuotas</a></li>
+            <li class="nav-item">
+  <a class="nav-link" href="{% url 'prestamos:prestamo_list' %}">
+    💰 Préstamos
+  </a>
+</li>
+
+<li class="nav-item">
+  <a class="nav-link" href="{% url 'prestamos:trabajador_list' %}">
+    👨‍💼 Trabajadores
+  </a>
+</li>
+
+<li class="nav-item">
+  <a class="nav-link" href="{% url 'prestamos:cancelar_cuotas_masivo' %}">
+    📅 Cancelar Cuotas
+  </a>
+</li>
         {% endif %}
       </ul>
 

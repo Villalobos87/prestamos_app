@@ -29,6 +29,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
+from django.utils.timezone import now
 
 
 
@@ -383,6 +384,10 @@ def cancelar_cuotas_masivo(request):
             "total_leon": total_leon,
             "total_managua": total_managua,
             "total_matagalpa": total_matagalpa,
+
+      # 🆕 FECHA ACTUAL
+        "hoy": now().date(),
+
         }
     )
 

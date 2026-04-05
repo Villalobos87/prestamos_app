@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% block content %}
-<h2 class="fw-bold mb-0">⚠️ Cancelar Cuotas</h2>
+<h2 class="fw-bold mb-0">📅 Cancelar Cuotas</h2>
 
 <div class="row mb-4">
 
@@ -275,6 +275,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 {% for fecha, datos in resumen.items %}
     <div style="margin-bottom:5px;">
+
+        {% if fecha < hoy %}
+            🔴
+        {% elif fecha == hoy %}
+            🟡
+        {% else %}
+            🟢
+        {% endif %}
+
         <strong>{{ fecha|date:"d/m/Y" }}</strong> →
 
         León ${{ datos.León|floatformat:2|intcomma }} |
@@ -282,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Matagalpa ${{ datos.Matagalpa|floatformat:2|intcomma }} |
         <strong>TOTAL ${{ datos.total|floatformat:2|intcomma }}</strong>
     </div>
+
 {% empty %}
     <p>No hay montos pendientes.</p>
 {% endfor %}
