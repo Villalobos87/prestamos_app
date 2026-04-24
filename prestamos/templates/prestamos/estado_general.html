@@ -1,33 +1,316 @@
 {% load humanize %}
 
-<h4>Resumen</h4>
-<ul>
-    <li><strong>Total Débitos:</strong> {{ total_debitos|floatformat:2|intcomma }}</li>
-    <li><strong>Total Créditos:</strong> {{ total_creditos|floatformat:2|intcomma }}</li>
-    <li><strong>Saldo Final:</strong> {{ saldo_final|floatformat:2|intcomma }}</li>
-</ul>
+<div class="bank-app">
 
-<h3>Estado de cuenta general</h3>
+    <!-- ================= HEADER ================= -->
+    <div class="bank-header">
+        <h2>📊 Estado de Cuenta</h2>
+        <p>Módulo financiero · Extracto de movimientos</p>
+    </div>
 
-<table class="table table-bordered table-sm">
-    <thead>
-        <tr>
-            <th>Fecha</th>
-            <th>Descripción</th>
-            <th>Débito</th>
-            <th>Crédito</th>
-            <th>Saldo</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for mov in movimientos %}
-        <tr>
-            <td>{{ mov.fecha }}</td>
-            <td>{{ mov.descripcion }}</td>
-            <td class="text-danger">{{ mov.debito|floatformat:2|intcomma }}</td>
-            <td class="text-success">{{ mov.credito|floatformat:2|intcomma }}</td>
-            <td><strong>{{ mov.saldo|floatformat:2|intcomma }}</strong></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <!-- ================= FILTRO ================= -->
+<form method="GET" class="bank-filter">
+
+    <div class="select-wrapper">
+
+        <label class="filter-label">Filtrar por año</label>
+
+        <div class="select-box">
+            <select name="year" onchange="this.form.submit()">
+
+                <option value="all">Todos los años</option>
+
+                {% for y in anios %}
+                <option value="{{ y }}"
+                    {% if year_selected == y|stringformat:"s" %}selected{% endif %}>
+                    {{ y }}
+                </option>
+                {% endfor %}
+
+            </select>
+
+            <span class="select-icon">▾</span>
+        </div>
+
+    </div>
+
+</form>
+
+    <!-- ================= RESUMEN ================= -->
+    <div class="bank-summary">
+
+        <div class="bank-card debit">
+            <span class="label">DÉBITOS</span>
+            <span class="value">C$ {{ total_debitos|floatformat:2|intcomma }}</span>
+        </div>
+
+        <div class="bank-card credit">
+            <span class="label">CRÉDITOS</span>
+            <span class="value">C$ {{ total_creditos|floatformat:2|intcomma }}</span>
+        </div>
+
+        <div class="bank-card balance">
+            <span class="label">SALDO ACTUAL</span>
+            <span class="value">C$ {{ saldo_final|floatformat:2|intcomma }}</span>
+        </div>
+
+    </div>
+
+    <!-- ================= TABLA ================= -->
+    <div class="bank-table-wrapper">
+
+        <table class="bank-table">
+
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Detalle</th>
+                    <th class="right">Débito</th>
+                    <th class="right">Crédito</th>
+                    <th class="right">Saldo</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for mov in movimientos %}
+                <tr>
+
+                    <td class="date">{{ mov.fecha }}</td>
+
+                    <td class="desc">
+                        {{ mov.descripcion }}
+                    </td>
+
+                    <td class="right debit">
+                        {{ mov.debito|floatformat:2|intcomma }}
+                    </td>
+
+                    <td class="right credit">
+                        {{ mov.credito|floatformat:2|intcomma }}
+                    </td>
+
+                    <td class="right balance">
+                        {{ mov.saldo|floatformat:2|intcomma }}
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<style>
+
+/* ===== BASE ===== */
+.bank-app{
+    padding: 25px;
+    background: #f6f8fc;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1f2d3d;
+}
+
+/* ===== HEADER ===== */
+.bank-header{
+    background: white;
+    padding: 18px 22px;
+    border-radius: 14px;
+    border: 1px solid #e9eef5;
+    margin-bottom: 18px;
+}
+
+.bank-header h2{
+    margin: 0;
+    font-size: 22px;
+}
+
+.bank-header p{
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #7a8aa0;
+}
+
+/* ===== SUMMARY ===== */
+.bank-summary{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.bank-card{
+    background: white;
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px solid #e9eef5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: 0.2s ease;
+}
+
+.bank-card:hover{
+    transform: translateY(-2px);
+}
+
+.bank-card .label{
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #8a97ad;
+}
+
+.bank-card .value{
+    display: block;
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+/* colores finos */
+.bank-card.debit{ border-left: 4px solid #e74c3c; }
+.bank-card.credit{ border-left: 4px solid #2ecc71; }
+.bank-card.balance{ border-left: 4px solid #3498db; }
+
+/* ===== TABLE WRAPPER ===== */
+.bank-table-wrapper{
+    background: white;
+    border-radius: 14px;
+    border: 1px solid #e9eef5;
+    overflow: hidden;
+}
+
+/* ===== TABLE ===== */
+.bank-table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+/* HEADER */
+.bank-table thead{
+    background: #f1f5fb;
+}
+
+.bank-table th{
+    text-align: left;
+    padding: 14px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #6b7c93;
+    border-bottom: 1px solid #e9eef5;
+}
+
+/* ROWS */
+.bank-table td{
+    padding: 14px;
+    border-bottom: 1px solid #f0f2f7;
+}
+
+/* hover sutil banco */
+.bank-table tbody tr:hover{
+    background: #f7faff;
+}
+
+/* alignment */
+.right{
+    text-align: right;
+}
+
+/* estilos contables */
+.debit{
+    color: #e74c3c;
+    font-weight: 500;
+}
+
+.credit{
+    color: #2ecc71;
+    font-weight: 500;
+}
+
+.balance{
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.date{
+    color: #5f6c7b;
+    font-size: 13px;
+}
+
+.desc{
+    color: #2c3e50;
+}
+
+
+</style>
+
+<style>
+
+/* CONTENEDOR */
+.bank-filter{
+    margin-bottom: 20px;
+}
+
+/* LABEL */
+.filter-label{
+    font-size: 12px;
+    color: #7a8aa0;
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* WRAPPER */
+.select-wrapper{
+    max-width: 220px;
+}
+
+/* CAJA */
+.select-box{
+    position: relative;
+}
+
+/* SELECT */
+.select-box select{
+    width: 100%;
+    appearance: none;
+    padding: 10px 35px 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #e0e6ed;
+    background: white;
+    font-size: 14px;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* HOVER */
+.select-box select:hover{
+    border-color: #c8d1dc;
+}
+
+/* FOCUS (ESTILO BANCO) */
+.select-box select:focus{
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+}
+
+/* ICONO */
+.select-icon{
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #7a8aa0;
+    font-size: 12px;
+}
+
+/* OPCIONAL: EFECTO SUAVE */
+.select-box select:active{
+    transform: scale(0.99);
+}
+
+</style>
+

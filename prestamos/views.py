@@ -731,24 +731,25 @@ class LoginRequiredMessageMixin(AccessMixin):
         return super().dispatch(request, *args, **kwargs)
     
 
-def estado_cuenta_general():
+def estado_cuenta_general(year=None):
+
     movimientos = []
 
     # 🔴 CAPITAL INICIAL
     movimientos.append({
-    'fecha': date(2025, 1, 1),
-    'descripcion': 'Capital inicial',
-    'debito': Decimal('0.00'),
-    'credito': Decimal('15000.00')
-})
+        'fecha': date(2025, 1, 1),
+        'descripcion': 'Capital inicial',
+        'debito': Decimal('0.00'),
+        'credito': Decimal('15000.00')
+    })
 
     # 🔴 DÉBITO MANUAL
     movimientos.append({
-    'fecha': date(2025, 10, 16),
-    'descripcion': 'Remanente',
-    'debito': Decimal('6247.73'),
-    'credito': Decimal('0.00')
-})
+        'fecha': date(2025, 10, 16),
+        'descripcion': 'Remanente',
+        'debito': Decimal('6247.73'),
+        'credito': Decimal('0.00')
+    })
 
     # 🔴 PRÉSTAMOS
     prestamos = Prestamo.objects.select_related('trabajador').only(
@@ -760,52 +761,119 @@ def estado_cuenta_general():
             'fecha': p.fecha_inicio,
             'descripcion': f'Préstamo #{p.id} - {p.trabajador}',
             'debito': p.monto,
-            'credito': 0
+            'credito': Decimal('0.00')
         })
 
-    # 🟢 CRÉDITOS AGRUPADOS POR CHEQUE
-    from django.db.models import Sum
-
+    # 🟢 CRÉDITOS
     cuotas_agrupadas = (
         Cuota.objects
         .filter(estado__iexact='pagado')
         .values('cheque', 'fecha_pago', 'prestamo__trabajador__campus')
         .annotate(total=Sum('monto_total'))
-        .order_by('fecha_pago')
     )
 
     for c in cuotas_agrupadas:
         movimientos.append({
             'fecha': c['fecha_pago'],
             'descripcion': f'Cheque {c["cheque"]} - Campus {c["prestamo__trabajador__campus"]}',
-            'debito': 0,
+            'debito': Decimal('0.00'),
             'credito': c['total']
         })
 
-    # 📊 ORDENAR
+    # =========================
+    # 📊 ORDENAR GENERAL
+    # =========================
     movimientos = sorted(movimientos, key=lambda x: x['fecha'])
 
-    # 🧮 SALDO
-    saldo = 0
+    # =========================
+    # 🧮 CALCULAR SALDO TOTAL
+    # =========================
+    saldo = Decimal('0.00')
+
     for mov in movimientos:
         saldo += mov['credito']
         saldo -= mov['debito']
         mov['saldo'] = saldo
 
+    # =========================
+    # 💥 SALDO DE ARRASTRE
+    # =========================
+    if year and year != "all":
+        year = int(year)
+
+        # saldo antes del año
+        saldo_inicial = Decimal('0.00')
+
+        for mov in movimientos:
+            if mov['fecha'].year < year:
+                saldo_inicial = mov['saldo']
+            else:
+                break
+
+        # filtrar movimientos del año
+        movimientos_filtrados = [
+            m for m in movimientos if m['fecha'].year == year
+        ]
+
+        # 👉 insertar saldo inicial
+        if movimientos_filtrados:
+            movimientos_filtrados.insert(0, {
+                'fecha': date(year, 1, 1),
+                'descripcion': 'Saldo inicial',
+                'debito': Decimal('0.00'),
+                'credito': Decimal('0.00'),
+                'saldo': saldo_inicial
+            })
+
+        # recalcular saldo desde arrastre
+        saldo = saldo_inicial
+
+        for mov in movimientos_filtrados:
+            if mov['descripcion'] != 'Saldo inicial':
+                saldo += mov['credito']
+                saldo -= mov['debito']
+                mov['saldo'] = saldo
+
+        movimientos = movimientos_filtrados
+
+    # =========================
+    # 🔽 ORDEN FINAL (BANCO)
+    # =========================
+    movimientos = sorted(movimientos, key=lambda x: x['fecha'], reverse=True)
+
     return movimientos
 
-
 def estado_cuenta_general_view(request):
-    movimientos = estado_cuenta_general()
 
-    # 🔥 TOTALES (MUY IMPORTANTE PARA REPORTE)
-    total_debitos = sum(m['debito'] for m in movimientos)
-    total_creditos = sum(m['credito'] for m in movimientos)
-    saldo_final = total_debitos - total_creditos
+    year = request.GET.get("year")
+
+    # 🎯 SI NO VIENE AÑO → usar año actual
+    if not year or year == "":
+        year = str(datetime.now().year)
+
+    movimientos = estado_cuenta_general(year)
+
+    # 🔥 TOTALES GLOBALES (NO CAMBIAN CON FILTRO)
+    movimientos_all = estado_cuenta_general("all")
+
+    total_debitos = sum(m['debito'] for m in movimientos_all)
+    total_creditos = sum(m['credito'] for m in movimientos_all)
+    saldo_final = total_creditos - total_debitos
+
+    # 🎯 LISTA DE AÑOS DISPONIBLES
+    anios = sorted(
+        list(set(m['fecha'].year for m in movimientos_all)),
+        reverse=True
+    )
 
     return render(request, 'prestamos/estado_general.html', {
         'movimientos': movimientos,
         'total_debitos': total_debitos,
         'total_creditos': total_creditos,
-        'saldo_final': saldo_final
+        'saldo_final': saldo_final,
+        'anios': anios,
+        'year_selected': year
     })
+
+
+
