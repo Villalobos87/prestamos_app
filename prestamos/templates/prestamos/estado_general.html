@@ -1,0 +1,33 @@
+{% load humanize %}
+
+<h4>Resumen</h4>
+<ul>
+    <li><strong>Total Débitos:</strong> {{ total_debitos|floatformat:2|intcomma }}</li>
+    <li><strong>Total Créditos:</strong> {{ total_creditos|floatformat:2|intcomma }}</li>
+    <li><strong>Saldo Final:</strong> {{ saldo_final|floatformat:2|intcomma }}</li>
+</ul>
+
+<h3>Estado de cuenta general</h3>
+
+<table class="table table-bordered table-sm">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Descripción</th>
+            <th>Débito</th>
+            <th>Crédito</th>
+            <th>Saldo</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mov in movimientos %}
+        <tr>
+            <td>{{ mov.fecha }}</td>
+            <td>{{ mov.descripcion }}</td>
+            <td class="text-danger">{{ mov.debito|floatformat:2|intcomma }}</td>
+            <td class="text-success">{{ mov.credito|floatformat:2|intcomma }}</td>
+            <td><strong>{{ mov.saldo|floatformat:2|intcomma }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

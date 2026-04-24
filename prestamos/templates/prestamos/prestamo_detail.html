@@ -112,7 +112,15 @@
 <a href="{% url 'prestamos:imprimir_documento' object.id %}?tipo=pagare" class="btn btn-info">📜 Pagaré</a>
 
 <!-- Nuevo botón de correo -->
-  <a href="{% url 'prestamos:enviar_correo' object.id %}" class="btn btn-dark">✉️ Correo</a>
-</div>
+  {% if prestamo.correo_enviado %}
+    <a href="#" class="btn btn-secondary"
+       onclick="alert('Que no entiendes que el correo ya fue enviado')">
+       ✅ Correo enviado
+    </a>
+{% else %}
+    <a href="{% url 'prestamos:enviar_correo' object.id %}" class="btn btn-dark">
+        ✉️ Enviar correo
+    </a>
+{% endif %}
 
 {% endblock %}

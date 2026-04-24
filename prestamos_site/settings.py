@@ -100,8 +100,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get("EMAIL_USER", "tu_correo@ejemplo.com")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASS", "TU_CONTRASEÑA_APP")
+EMAIL_HOST_USER = os.environ.get("EMAIL_USER", "yanina.reyes@ucc.edu.ni")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASS", "hnqb itpt zpnh dodw")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # --- LOGIN / LOGOUT ---

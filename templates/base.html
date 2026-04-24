@@ -1,3 +1,4 @@
+{% load group_filters %}
 {% load static %}
 {% load widget_tweaks %}
 <!doctype html>
@@ -19,7 +20,7 @@
 
     <!-- BRAND -->
     <a class="navbar-brand fw-bold" href="#">
-        🏢 ERGB SYSTEM
+        🏢 ERGB
     </a>
 
     <!-- TOGGLE -->
@@ -34,40 +35,54 @@
 
         {% if user.is_authenticated %}
 
-        <!-- 💰 PRÉSTAMOS -->
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'prestamos:prestamo_list' %}">
-            💰 Préstamos
-          </a>
-        </li>
+            <!-- 💰 PRÉSTAMOS (solo admin_total) -->
+            {% if user|has_group:"admin_total" %}
+            
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'prestamos:prestamo_list' %}">
+                    💰 Préstamos
+                  </a>
+                </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'prestamos:trabajador_list' %}">
-            👨‍💼 Trabajadores
-          </a>
-        </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'prestamos:trabajador_list' %}">
+                    👨‍💼 Trabajadores
+                  </a>
+                </li>
 
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'prestamos:cancelar_cuotas_masivo' %}">
-            📅 Cuotas
-          </a>
-        </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'prestamos:cancelar_cuotas_masivo' %}">
+                    📅 Cuotas
+                  </a>
+                </li>
 
-        <!-- 🚗 ESCUELA (TASKS) -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-            🚗 Escuela
-          </a>
+                <!-- 📊 ESTADO DE CUENTA -->
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'prestamos:estado_general' %}">
+                    📊 Estado de cuenta
+                  </a>
+               </li>
 
-          <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="{% url 'list_tasks' %}">
-                📋 Lista de clases
-              </a>
-            </li>
-          </ul>
+            {% endif %}
 
-        </li>
+            <!-- 🚗 ESCUELA (admin_total y escuela) -->
+            {% if user|has_group:"admin_total" or user|has_group:"escuela" %}
+            
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    🚗 Escuela
+                  </a>
+
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a class="dropdown-item" href="{% url 'list_tasks' %}">
+                        📋 Lista de clases
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+
+            {% endif %}
 
         {% endif %}
 

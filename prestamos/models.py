@@ -21,6 +21,7 @@ class Prestamo(models.Model):
     plazo = models.PositiveIntegerField(help_text="Número de cuotas/meses")
     fecha_inicio = models.DateField(help_text="Primera fecha de pago (15 o fin de mes)")
     fecha_final = models.DateField(blank=True, null=True)
+    correo_enviado = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Préstamo {self.id} - {self.trabajador} ({self.plazo} meses)"

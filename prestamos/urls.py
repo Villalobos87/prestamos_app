@@ -4,6 +4,7 @@ from .views import PrestamoUpdateView, cuotas_masivo_pdf
 from django.contrib.auth import views as auth_views
 from django.shortcuts import redirect
 from .views import login_view
+from .views import estado_cuenta_general_view
 
 app_name = "prestamos"  # namespace
 
@@ -38,4 +39,6 @@ urlpatterns = [
 
     # Redirección raíz de la app
     path("", home_redirect, name="home_redirect"),
+
+    path('estado-general/', estado_cuenta_general_view, name='estado_general'),
 ]

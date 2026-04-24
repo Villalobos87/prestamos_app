@@ -25,11 +25,14 @@ from django.core.mail import EmailMessage
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
 from django.utils.timezone import now
+from django.core.mail import EmailMultiAlternatives
+from datetime import date
+from decimal import Decimal
 
 
 
@@ -71,7 +74,7 @@ class TrabajadorCreateView(LoginRequiredMixin, CreateView):
 # ======================================
 # Prestamo Views
 # ======================================
-class PrestamoListView(LoginRequiredMixin, ListView):
+class PrestamoListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Prestamo
     template_name = "prestamos/prestamo_list.html"
     context_object_name = "items"
@@ -79,6 +82,14 @@ class PrestamoListView(LoginRequiredMixin, ListView):
     ordering = ['-id']
     filterset_class = PrestamoFilter
     login_url = settings.LOGIN_URL
+
+# 🔐 SOLO admin_total
+    def test_func(self):
+        return self.request.user.groups.filter(name='admin_total').exists()
+
+    # 🔁 si no tiene permiso → lo mandas a escuela
+    def handle_no_permission(self):
+        return redirect('list_tasks')
 
 
 # ======================================
@@ -625,37 +636,80 @@ def imprimir_documento(request, prestamo_id):
 
 @login_required(login_url=settings.LOGIN_URL)
 def enviar_correo(request, pk):
-    # Obtener el préstamo
+
     prestamo = get_object_or_404(Prestamo, pk=pk)
 
-    # Generar PDF en memoria usando WeasyPrint
-    html_string = render_to_string('prestamos/prestamo_pdf.html', {'object': prestamo})
-    pdf_file = BytesIO()
-    HTML(string=html_string).write_pdf(pdf_file)
+# 🚫 EVITAR ENVÍO DUPLICADO
+    if prestamo.correo_enviado:
+        messages.warning(request, "⚠️ Que no entiendes que el correo ya fue enviado")
+        return redirect('prestamos:detalle', pk=pk)    
 
-    # Preparar asunto y mensaje del correo
-    asunto = f"Préstamo: {prestamo.trabajador.nombre} - ${prestamo.monto}"
-    mensaje = f"Adjunto el PDF del préstamo de {prestamo.trabajador.nombre} por ${prestamo.monto}."
-
-    # Configurar correo
-    correo = EmailMessage(
-        subject=asunto,
-        body=mensaje,
-        from_email='jose.villalobos@ucc.edu.ni',  # tu correo institucional
-        to=['jmvillalobos87@gmail.com', ''],  # destinatarios
+    # =========================
+    # 📄 GENERAR PDF
+    # =========================
+    html_string = render_to_string(
+        'prestamos/prestamo_pdf.html',
+        {'object': prestamo}
     )
 
-    # Adjuntar PDF
-    correo.attach(f'Prestamo_{prestamo.id}.pdf', pdf_file.getvalue(), 'application/pdf')
+    pdf_file = BytesIO()
+    HTML(string=html_string).write_pdf(pdf_file)
+    pdf_file.seek(0)
 
+    # =========================
+    # 📧 ASUNTO
+    # =========================
+    asunto = f"Préstamo: {prestamo.trabajador.nombre} - ${prestamo.monto:,.2f}"
+
+    # =========================
+    # 📧 HTML BONITO
+    # =========================
+    html_content = render_to_string(
+        'prestamos/correo_prestamo.html',
+        {'prestamo': prestamo}
+    )
+
+    # =========================
+    # 📧 CREAR CORREO
+    # =========================
+    correo = EmailMultiAlternatives(
+        subject=asunto,
+        body="Se adjunta el detalle del prestamo.",
+        from_email='yanina.reyes@ucc.edu.ni',
+        to=['rodrigo.gurdian@ucc.edu.ni'],
+        cc=['jose.villalobos@ucc.edu.ni']
+    )
+
+    correo.encoding = 'utf-8'
+
+    # 🔥 Agregar HTML
+    correo.attach_alternative(html_content, "text/html")
+
+    # =========================
+    # 📎 ADJUNTAR PDF
+    # =========================
+    correo.attach(
+        f'Prestamo_{prestamo.id}.pdf',
+        pdf_file.read(),
+        'application/pdf'
+    )
+
+    # =========================
+    # 🚀 ENVIAR
+    # =========================
     try:
-        correo.send(fail_silently=False)
-        # Opcional: mostrar mensaje de éxito usando messages
-        # messages.success(request, "Correo enviado correctamente.")
-        return HttpResponseRedirect(reverse('prestamos:prestamo_list'))
+        correo.send()
+
+        # ✅ MARCAR COMO ENVIADO
+        prestamo.correo_enviado = True
+        prestamo.save()
+
+        messages.success(request, "📧 Correo enviado correctamente")
+
     except Exception as e:
-        # En caso de error, mostrar mensaje
-        return HttpResponse(f"Error al enviar el correo: {e}")
+        messages.error(request, f"❌ Error al enviar el correo: {e}")
+
+    return redirect('prestamos:prestamo_list')
     
 def login_view(request):
     if request.method == 'POST':
@@ -676,13 +730,82 @@ class LoginRequiredMessageMixin(AccessMixin):
             return render(request, "prestamos/acceso_denegado.html")
         return super().dispatch(request, *args, **kwargs)
     
-    
+
+def estado_cuenta_general():
+    movimientos = []
+
+    # 🔴 CAPITAL INICIAL
+    movimientos.append({
+    'fecha': date(2025, 1, 1),
+    'descripcion': 'Capital inicial',
+    'debito': Decimal('0.00'),
+    'credito': Decimal('15000.00')
+})
+
+    # 🔴 DÉBITO MANUAL
+    movimientos.append({
+    'fecha': date(2025, 10, 16),
+    'descripcion': 'Remanente',
+    'debito': Decimal('6247.73'),
+    'credito': Decimal('0.00')
+})
+
+    # 🔴 PRÉSTAMOS
+    prestamos = Prestamo.objects.select_related('trabajador').only(
+        'id', 'fecha_inicio', 'monto', 'trabajador'
+    )
+
+    for p in prestamos:
+        movimientos.append({
+            'fecha': p.fecha_inicio,
+            'descripcion': f'Préstamo #{p.id} - {p.trabajador}',
+            'debito': p.monto,
+            'credito': 0
+        })
+
+    # 🟢 CRÉDITOS AGRUPADOS POR CHEQUE
+    from django.db.models import Sum
+
+    cuotas_agrupadas = (
+        Cuota.objects
+        .filter(estado__iexact='pagado')
+        .values('cheque', 'fecha_pago', 'prestamo__trabajador__campus')
+        .annotate(total=Sum('monto_total'))
+        .order_by('fecha_pago')
+    )
+
+    for c in cuotas_agrupadas:
+        movimientos.append({
+            'fecha': c['fecha_pago'],
+            'descripcion': f'Cheque {c["cheque"]} - Campus {c["prestamo__trabajador__campus"]}',
+            'debito': 0,
+            'credito': c['total']
+        })
+
+    # 📊 ORDENAR
+    movimientos = sorted(movimientos, key=lambda x: x['fecha'])
+
+    # 🧮 SALDO
+    saldo = 0
+    for mov in movimientos:
+        saldo += mov['credito']
+        saldo -= mov['debito']
+        mov['saldo'] = saldo
+
+    return movimientos
 
 
+def estado_cuenta_general_view(request):
+    movimientos = estado_cuenta_general()
 
+    # 🔥 TOTALES (MUY IMPORTANTE PARA REPORTE)
+    total_debitos = sum(m['debito'] for m in movimientos)
+    total_creditos = sum(m['credito'] for m in movimientos)
+    saldo_final = total_debitos - total_creditos
 
-
-
-
-
-
+    return render(request, 'prestamos/estado_general.html', {
+        'movimientos': movimientos,
+        'total_debitos': total_debitos,
+        'total_creditos': total_creditos,
+        'saldo_final': saldo_final
+    })
