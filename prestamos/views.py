@@ -822,7 +822,7 @@ def estado_cuenta_general(year=None):
                 'descripcion': 'Saldo inicial',
                 'debito': Decimal('0.00'),
                 'credito': Decimal('0.00'),
-                'saldo': saldo_inicial
+                'saldo': saldo_inicial,
             })
 
         # recalcular saldo desde arrastre

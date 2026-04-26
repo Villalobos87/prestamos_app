@@ -1,4 +1,6 @@
+{% extends 'base.html' %}
 {% load humanize %}
+{% block content %}
 
 <div class="bank-app">
 
@@ -41,17 +43,17 @@
 
         <div class="bank-card debit">
             <span class="label">DÉBITOS</span>
-            <span class="value">C$ {{ total_debitos|floatformat:2|intcomma }}</span>
+            <span class="value">$ {{ total_debitos|floatformat:2|intcomma }}</span>
         </div>
 
         <div class="bank-card credit">
             <span class="label">CRÉDITOS</span>
-            <span class="value">C$ {{ total_creditos|floatformat:2|intcomma }}</span>
+            <span class="value">$ {{ total_creditos|floatformat:2|intcomma }}</span>
         </div>
 
         <div class="bank-card balance">
             <span class="label">SALDO ACTUAL</span>
-            <span class="value">C$ {{ saldo_final|floatformat:2|intcomma }}</span>
+            <span class="value">$ {{ saldo_final|floatformat:2|intcomma }}</span>
         </div>
 
     </div>
@@ -68,6 +70,7 @@
                     <th class="right">Débito</th>
                     <th class="right">Crédito</th>
                     <th class="right">Saldo</th>
+                    
                 </tr>
             </thead>
 
@@ -314,3 +317,4 @@
 
 </style>
 
+{% endblock %}
