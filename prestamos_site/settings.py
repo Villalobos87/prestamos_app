@@ -103,6 +103,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get("EMAIL_USER", "yanina.reyes@ucc.edu.ni")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASS", "hnqb itpt zpnh dodw")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_TIMEOUT = 30
 
 # --- LOGIN / LOGOUT ---
 LOGIN_URL = '/accounts/login/'
