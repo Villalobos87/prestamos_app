@@ -647,14 +647,14 @@ def enviar_correo(request, pk):
     # =========================
     # 📄 GENERAR PDF
     # =========================
-    html_string = render_to_string(
-       'prestamos/prestamo_pdf.html',
-        {'object': prestamo}
-    )
+    #html_string = render_to_string(
+    #   'prestamos/prestamo_pdf.html',
+    #    {'object': prestamo}
+    #)
 
-    pdf_file = BytesIO()
-    HTML(string=html_string).write_pdf(pdf_file)
-    pdf_file.seek(0)
+    #pdf_file = BytesIO()
+    #HTML(string=html_string).write_pdf(pdf_file)
+    #pdf_file.seek(0)
 
     # =========================
     # 📧 ASUNTO
@@ -688,11 +688,11 @@ def enviar_correo(request, pk):
     # =========================
     # 📎 ADJUNTAR PDF
     # =========================
-    correo.attach(
-        f'Prestamo_{prestamo.id}.pdf',
-        pdf_file.read(),
-        'application/pdf'
-    )
+    #correo.attach(
+    #    f'Prestamo_{prestamo.id}.pdf',
+    #    pdf_file.read(),
+    #    'application/pdf'
+    #)
 
     # =========================
     # 🚀 ENVIAR
