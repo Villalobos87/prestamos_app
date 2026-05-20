@@ -675,9 +675,9 @@ def enviar_correo(request, pk):
     correo = EmailMultiAlternatives(
         subject=asunto,
         body="Se adjunta el detalle del prestamo.",
-        from_email='jose.villalobos@ucc.edu.ni',
+        from_email='yanina.reyes@ucc.edu.ni',
         to=['rodrigo.gurdian@ucc.edu.ni'],
-        cc=['yanina.reyes@ucc.edu.ni']
+        cc=['jose.villalobos@ucc.edu.ni']
     )
 
     correo.encoding = 'utf-8'
