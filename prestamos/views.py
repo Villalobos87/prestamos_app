@@ -783,8 +783,13 @@ def estado_cuenta_general(year=None):
     # =========================
     # 📊 ORDENAR GENERAL
     # =========================
-    movimientos = sorted(movimientos, key=lambda x: x['fecha'])
-
+    movimientos = sorted(
+    movimientos,
+    key=lambda x: (
+        x['fecha'],
+        x.get('prestamo_id', 0)
+    )
+)
     # =========================
     # 🧮 CALCULAR SALDO TOTAL
     # =========================
@@ -839,7 +844,7 @@ def estado_cuenta_general(year=None):
     # =========================
     # 🔽 ORDEN FINAL (BANCO)
     # =========================
-    movimientos = sorted(movimientos, key=lambda x: x['fecha'], reverse=True)
+    movimientos.reverse()
 
     return movimientos
 
