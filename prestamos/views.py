@@ -747,7 +747,7 @@ def estado_cuenta_general(year=None):
     movimientos.append({
         'fecha': date(2025, 10, 16),
         'descripcion': 'Remanente',
-        'debito': Decimal('11964.43'),
+        'debito': Decimal('12926.31'),
         'credito': Decimal('0.00')
     })
 
