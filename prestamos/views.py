@@ -740,7 +740,7 @@ def estado_cuenta_general(year=None):
         'fecha': date(2025, 1, 1),
         'descripcion': 'Capital inicial',
         'debito': Decimal('0.00'),
-        'credito': Decimal('12000.00')
+        'credito': Decimal('13500.00')
     })
 
     # 🔴 DÉBITO MANUAL
