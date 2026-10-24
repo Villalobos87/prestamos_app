@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
 from django.contrib import messages
-from .models import Trabajador, Prestamo, Cuota
+from .models import Trabajador, Prestamo, Cuota, MovimientoManual
 from .forms import TrabajadorForm, PrestamoForm
 from decimal import Decimal, ROUND_HALF_UP
 from dateutil.relativedelta import relativedelta
@@ -27,7 +27,7 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.mixins import AccessMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from collections import defaultdict
 from django.utils.timezone import now
 from django.core.mail import EmailMultiAlternatives
@@ -735,21 +735,18 @@ def estado_cuenta_general(year=None):
 
     movimientos = []
 
-    # 🔴 CAPITAL INICIAL
-    movimientos.append({
-        'fecha': date(2025, 1, 1),
-        'descripcion': 'Capital inicial',
-        'debito': Decimal('0.00'),
-        'credito': Decimal('14500.00')
-    })
+    # MOVIMIENTOS MANUALES DESDE POSTGRESQL
+    movimientos_manuales = MovimientoManual.objects.filter(
+        activo=True
+    ).order_by('fecha', 'id')
 
-    # 🔴 DÉBITO MANUAL
-    movimientos.append({
-        'fecha': date(2025, 10, 16),
-        'descripcion': 'Remanente',
-        'debito': Decimal('13961.45'),
-        'credito': Decimal('0.00')
-    })
+    for m in movimientos_manuales:
+        movimientos.append({
+            'fecha': m.fecha,
+            'descripcion': m.descripcion,
+            'debito': m.debito,
+            'credito': m.credito,
+        })
 
     # 🔴 PRÉSTAMOS
     prestamos = Prestamo.objects.select_related('trabajador').only(
@@ -879,6 +876,101 @@ def estado_cuenta_general_view(request):
         'anios': anios,
         'year_selected': year
     })
+
+# ==========================================================
+# ADMINISTRACIÓN DE MOVIMIENTOS MANUALES
+# ==========================================================
+
+def es_superusuario(user):
+    return user.is_authenticated and user.is_superuser
+
+
+@login_required
+@user_passes_test(es_superusuario)
+def movimientos_manuales_view(request):
+    movimientos = MovimientoManual.objects.all().order_by(
+        "-fecha", "-id"
+    )
+
+    movimiento_editar = None
+    editar_id = request.GET.get("editar")
+
+    if editar_id:
+        movimiento_editar = get_object_or_404(
+            MovimientoManual,
+            pk=editar_id
+        )
+
+    return render(
+        request,
+        "prestamos/movimientos_manuales.html",
+        {
+            "movimientos": movimientos,
+            "movimiento_editar": movimiento_editar,
+        }
+    )
+
+
+@login_required
+@user_passes_test(es_superusuario)
+def guardar_movimiento_manual_view(request):
+    if request.method != "POST":
+        return redirect("prestamos:movimientos_manuales")
+
+    movimiento_id = request.POST.get("movimiento_id")
+
+    if movimiento_id:
+        movimiento = get_object_or_404(
+            MovimientoManual,
+            pk=movimiento_id
+        )
+    else:
+        movimiento = MovimientoManual()
+
+    try:
+        movimiento.fecha = request.POST.get("fecha")
+        movimiento.tipo = request.POST.get("tipo")
+        movimiento.descripcion = request.POST.get("descripcion", "").strip()
+        movimiento.debito = Decimal(
+            request.POST.get("debito") or "0"
+        )
+        movimiento.credito = Decimal(
+            request.POST.get("credito") or "0"
+        )
+        movimiento.activo = request.POST.get("activo") == "on"
+
+        if not movimiento.descripcion:
+            raise ValueError("La descripción es obligatoria.")
+
+        if movimiento.debito < 0 or movimiento.credito < 0:
+            raise ValueError("Los importes no pueden ser negativos.")
+
+        if movimiento.debito > 0 and movimiento.credito > 0:
+            raise ValueError(
+                "Registra un importe en débito o en crédito, no en ambos."
+            )
+
+        if movimiento.debito == 0 and movimiento.credito == 0:
+            raise ValueError(
+                "Debes registrar un importe en débito o en crédito."
+            )
+
+        movimiento.save()
+
+        messages.success(
+            request,
+            "Movimiento manual guardado correctamente."
+        )
+
+    except (ValueError, TypeError, ArithmeticError) as error:
+        messages.error(
+            request,
+            f"No se pudo guardar el movimiento: {error}"
+        )
+
+        return redirect("prestamos:movimientos_manuales")
+
+    return redirect("prestamos:movimientos_manuales")
 
 
 

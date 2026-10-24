@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Trabajador, Prestamo, Cuota
+from .models import Trabajador, Prestamo, Cuota, MovimientoManual
 
 @admin.register(Trabajador)
 class TrabajadorAdmin(admin.ModelAdmin):
@@ -21,3 +21,19 @@ class CuotaAdmin(admin.ModelAdmin):
     list_display = ("prestamo", "numero", "fecha_pago", "monto_total", "estado")
     list_filter = ("estado",)
     search_fields = ("prestamo__trabajador__nombre",)
+
+@admin.register(MovimientoManual)
+class MovimientoManualAdmin(admin.ModelAdmin):
+    list_display = (
+        "fecha",
+        "tipo",
+        "descripcion",
+        "debito",
+        "credito",
+        "activo",
+    )
+
+    list_filter = ("tipo", "activo", "fecha")
+    search_fields = ("descripcion",)
+    list_editable = ("activo",)
+    ordering = ("fecha", "id")    

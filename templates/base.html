@@ -63,6 +63,16 @@
                   </a>
                </li>
 
+                <!-- ⚙️ MOVIMIENTOS MANUALES (solo superusuario) -->
+                {% if user.is_superuser %}
+                <li class="nav-item">
+                  <a class="nav-link"
+                     href="{% url 'prestamos:movimientos_manuales' %}">
+                    ⚙️ Movimientos manuales
+                  </a>
+                </li>
+                {% endif %}
+
             {% endif %}
 
             <!-- 🚗 ESCUELA (admin_total y escuela) -->

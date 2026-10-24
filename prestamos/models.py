@@ -127,3 +127,33 @@ class Cuota(models.Model):
         elif self.estado != "Reprogramado":  # respetamos reprogramados
             self.estado = "Pendiente"
         self.save(update_fields=["estado"])
+
+class MovimientoManual(models.Model):
+    TIPOS = (
+        ("CAPITAL_INICIAL", "Capital inicial"),
+        ("REMANENTE", "Remanente"),
+        ("OTRO", "Otro movimiento"),
+    )
+
+    fecha = models.DateField()
+    tipo = models.CharField(max_length=30, choices=TIPOS, default="OTRO")
+    descripcion = models.CharField(max_length=150)
+
+    debito = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0.00")
+    )
+    credito = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0.00")
+    )
+
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["fecha", "id"]
+        verbose_name = "Movimiento manual"
+        verbose_name_plural = "Movimientos manuales"
+
+    def __str__(self):
+        return f"{self.fecha} - {self.descripcion}"

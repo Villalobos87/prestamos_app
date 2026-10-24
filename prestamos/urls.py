@@ -41,4 +41,16 @@ urlpatterns = [
     path("", home_redirect, name="home_redirect"),
 
     path('estado-general/', estado_cuenta_general_view, name='estado_general'),
+
+    # Administración de movimientos contables
+path(
+    "movimientos-manuales/",
+    views.movimientos_manuales_view,
+    name="movimientos_manuales",
+),
+path(
+    "movimientos-manuales/guardar/",
+    views.guardar_movimiento_manual_view,
+    name="guardar_movimiento_manual",
+),
 ]
