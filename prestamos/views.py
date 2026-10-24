@@ -877,20 +877,102 @@ def estado_cuenta_general_view(request):
         'year_selected': year
     })
 
+
+
 # ==========================================================
 # ADMINISTRACIÓN DE MOVIMIENTOS MANUALES
+# ==========================================================
+
+from decimal import Decimal
+from django.db.models import Sum
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect, get_object_or_404
+
+from .models import MovimientoManual
+
+
+# ==========================================================
+# VERIFICAR SI EL USUARIO ES SUPERUSUARIO
 # ==========================================================
 
 def es_superusuario(user):
     return user.is_authenticated and user.is_superuser
 
 
+# ==========================================================
+# LISTAR Y EDITAR MOVIMIENTOS MANUALES
+# ==========================================================
+
 @login_required
 @user_passes_test(es_superusuario)
 def movimientos_manuales_view(request):
+
+    # Todos los movimientos para mostrarlos en la tabla.
     movimientos = MovimientoManual.objects.all().order_by(
         "-fecha", "-id"
     )
+
+    # Solo los movimientos activos se utilizan para las tarjetas.
+    activos = MovimientoManual.objects.filter(activo=True)
+
+    # ======================================================
+    # TOTAL CAPITAL INICIAL
+    # ======================================================
+
+    capital = activos.filter(
+        tipo="CAPITAL_INICIAL"
+    ).aggregate(
+        total_debito=Sum("debito"),
+        total_credito=Sum("credito"),
+    )
+
+    total_capital = (
+        (capital["total_debito"] or Decimal("0.00"))
+        + (capital["total_credito"] or Decimal("0.00"))
+    )
+
+    # ======================================================
+    # TOTAL REMANENTES
+    # ======================================================
+
+    remanente = activos.filter(
+        tipo="REMANENTE"
+    ).aggregate(
+        total_debito=Sum("debito"),
+        total_credito=Sum("credito"),
+    )
+
+    total_remanente = (
+        (remanente["total_debito"] or Decimal("0.00"))
+        + (remanente["total_credito"] or Decimal("0.00"))
+    )
+
+    # ======================================================
+    # TOTAL OTROS MOVIMIENTOS
+    # ======================================================
+
+    otros = activos.filter(
+        tipo="OTRO"
+    ).aggregate(
+        total_debito=Sum("debito"),
+        total_credito=Sum("credito"),
+    )
+
+    total_otros = (
+        (otros["total_debito"] or Decimal("0.00"))
+        + (otros["total_credito"] or Decimal("0.00"))
+    )
+
+    # ======================================================
+    # CANTIDAD DE MOVIMIENTOS ACTIVOS
+    # ======================================================
+
+    cantidad_movimientos = activos.count()
+
+    # ======================================================
+    # IDENTIFICAR MOVIMIENTO QUE SE VA A EDITAR
+    # ======================================================
 
     movimiento_editar = None
     editar_id = request.GET.get("editar")
@@ -901,22 +983,40 @@ def movimientos_manuales_view(request):
             pk=editar_id
         )
 
+    # ======================================================
+    # DATOS PARA LA PLANTILLA
+    # ======================================================
+
+    contexto = {
+        "movimientos": movimientos,
+        "movimiento_editar": movimiento_editar,
+        "total_capital": total_capital,
+        "total_remanente": total_remanente,
+        "total_otros": total_otros,
+        "cantidad_movimientos": cantidad_movimientos,
+    }
+
     return render(
         request,
         "prestamos/movimientos_manuales.html",
-        {
-            "movimientos": movimientos,
-            "movimiento_editar": movimiento_editar,
-        }
+        contexto
     )
 
+
+# ==========================================================
+# GUARDAR O ACTUALIZAR UN MOVIMIENTO MANUAL
+# ==========================================================
 
 @login_required
 @user_passes_test(es_superusuario)
 def guardar_movimiento_manual_view(request):
+
+    # Esta operación solo acepta formularios enviados por POST.
     if request.method != "POST":
         return redirect("prestamos:movimientos_manuales")
 
+    # Si llega un ID, se actualiza el movimiento existente.
+    # Si no llega, se crea uno nuevo.
     movimiento_id = request.POST.get("movimiento_id")
 
     if movimiento_id:
@@ -928,32 +1028,60 @@ def guardar_movimiento_manual_view(request):
         movimiento = MovimientoManual()
 
     try:
-        movimiento.fecha = request.POST.get("fecha")
-        movimiento.tipo = request.POST.get("tipo")
-        movimiento.descripcion = request.POST.get("descripcion", "").strip()
-        movimiento.debito = Decimal(
-            request.POST.get("debito") or "0"
-        )
-        movimiento.credito = Decimal(
-            request.POST.get("credito") or "0"
-        )
-        movimiento.activo = request.POST.get("activo") == "on"
+        # ----------------------------------------------
+        # LEER LOS DATOS DEL FORMULARIO
+        # ----------------------------------------------
 
-        if not movimiento.descripcion:
+        fecha = request.POST.get("fecha")
+        tipo = request.POST.get("tipo")
+        descripcion = request.POST.get("descripcion", "").strip()
+
+        debito = Decimal(request.POST.get("debito") or "0")
+        credito = Decimal(request.POST.get("credito") or "0")
+
+        activo = request.POST.get("activo") == "on"
+
+        # ----------------------------------------------
+        # VALIDACIONES
+        # ----------------------------------------------
+
+        if not fecha:
+            raise ValueError("La fecha es obligatoria.")
+
+        tipos_validos = {
+            opcion[0]
+            for opcion in MovimientoManual.TIPOS
+        }
+
+        if tipo not in tipos_validos:
+            raise ValueError("El tipo de movimiento no es válido.")
+
+        if not descripcion:
             raise ValueError("La descripción es obligatoria.")
 
-        if movimiento.debito < 0 or movimiento.credito < 0:
+        if debito < 0 or credito < 0:
             raise ValueError("Los importes no pueden ser negativos.")
 
-        if movimiento.debito > 0 and movimiento.credito > 0:
+        if debito > 0 and credito > 0:
             raise ValueError(
                 "Registra un importe en débito o en crédito, no en ambos."
             )
 
-        if movimiento.debito == 0 and movimiento.credito == 0:
+        if debito == 0 and credito == 0:
             raise ValueError(
                 "Debes registrar un importe en débito o en crédito."
             )
+
+        # ----------------------------------------------
+        # GUARDAR LOS DATOS
+        # ----------------------------------------------
+
+        movimiento.fecha = fecha
+        movimiento.tipo = tipo
+        movimiento.descripcion = descripcion
+        movimiento.debito = debito
+        movimiento.credito = credito
+        movimiento.activo = activo
 
         movimiento.save()
 
@@ -963,14 +1091,11 @@ def guardar_movimiento_manual_view(request):
         )
 
     except (ValueError, TypeError, ArithmeticError) as error:
+
         messages.error(
             request,
             f"No se pudo guardar el movimiento: {error}"
         )
 
-        return redirect("prestamos:movimientos_manuales")
-
+    # Volver al listado después de guardar o mostrar un error.
     return redirect("prestamos:movimientos_manuales")
-
-
-
