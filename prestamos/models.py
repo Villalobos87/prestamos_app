@@ -9,6 +9,8 @@ class Trabajador(models.Model):
     codigo = models.CharField(max_length=10, unique=True)
     nombre = models.CharField(max_length=120)
     campus = models.CharField(max_length=80, blank=True, default="")
+    cuenta_bancaria_cordobas = models.CharField(max_length=30,blank=True,default='',verbose_name='Cuenta bancaria en córdobas')
+    cuenta_bancaria_dolares = models.CharField(max_length=30,blank=True,default='',verbose_name='Cuenta bancaria en dólares')
 
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
