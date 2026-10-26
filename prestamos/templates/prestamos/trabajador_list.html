@@ -4,10 +4,20 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="fw-bold mb-0">🧑‍💼 Trabajadores</h2>
-  <a href="{% url 'prestamos:trabajador_create' %}" class="btn btn-success">
-    ➕ Nuevo
-  </a>
+
+  <div class="d-flex gap-2">
+    <a href="{% url 'prestamos:trabajador_inactivos' %}"
+       class="btn btn-secondary">
+      Ver inactivos
+    </a>
+
+    <a href="{% url 'prestamos:trabajador_create' %}"
+       class="btn btn-success">
+      ➕ Nuevo
+    </a>
+  </div>
 </div>
+
 
 <div class="row mb-3">
 
@@ -83,8 +93,9 @@
             <th style="width: 10%;">Código</th>
             <th style="width: 35%;">Nombre</th>
             <th style="width: 15%;">Campus</th>
-            <th style="width: 20%;">Cuenta bancaria C$</th>
-            <th style="width: 20%;">Cuenta bancaria US$</th>
+            <th style="width: 15%;">Cuenta bancaria C$</th>
+            <th style="width: 15%;">Cuenta bancaria US$</th>
+            <th style="width: 11%;">Acciones</th>
           </tr>
 
           <!-- Filtros por columna -->
@@ -124,28 +135,36 @@
 
         <tbody>
 
-          {% for t in items %}
-            <tr>
-              <td>{{ t.codigo }}</td>
-              <td>{{ t.nombre }}</td>
-              <td>{{ t.campus }}</td>
+    {% for t in items %}
+    <tr>
+        <td>{{ t.codigo }}</td>
+        <td>{{ t.nombre }}</td>
+        <td>{{ t.campus }}</td>
 
-              <!-- Cuenta bancaria en córdobas -->
-              <td>{{ t.cuenta_bancaria_cordobas|default_if_none:"" }}</td>
+        <td>{{ t.cuenta_bancaria_cordobas|default_if_none:"" }}</td>
+        <td>{{ t.cuenta_bancaria_dolares|default_if_none:"" }}</td>
 
-              <!-- Cuenta bancaria en dólares -->
-              <td>{{ t.cuenta_bancaria_dolares|default_if_none:"" }}</td>
-            </tr>
+        <td>
+            <form method="post"
+                  action="{% url 'prestamos:trabajador_desactivar' t.pk %}"
+                  onsubmit="return confirm('¿Deseas desactivar a {{ t.nombre|escapejs }}?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-warning">
+                    Desactivar
+                </button>
+            </form>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="6" class="text-center">
+            No hay trabajadores activos registrados.
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
 
-          {% empty %}
-            <tr>
-              <td colspan="5" class="text-center text-muted">
-                ⚠️ No se encontraron trabajadores
-              </td>
-            </tr>
-          {% endfor %}
 
-        </tbody>
 
       </table>
 

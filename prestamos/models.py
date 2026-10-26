@@ -11,6 +11,8 @@ class Trabajador(models.Model):
     campus = models.CharField(max_length=80, blank=True, default="")
     cuenta_bancaria_cordobas = models.CharField(max_length=30,blank=True,default='',verbose_name='Cuenta bancaria en córdobas')
     cuenta_bancaria_dolares = models.CharField(max_length=30,blank=True,default='',verbose_name='Cuenta bancaria en dólares')
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+
 
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"

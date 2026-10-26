@@ -33,6 +33,7 @@ from django.utils.timezone import now
 from django.core.mail import EmailMultiAlternatives
 from datetime import date
 from decimal import Decimal
+from django.views.decorators.http import require_POST
 
 
 
@@ -46,7 +47,7 @@ class TrabajadorListView(LoginRequiredMixin, ListView):
     login_url = settings.LOGIN_URL
 
     def get_queryset(self):
-        return Trabajador.objects.all()
+        return Trabajador.objects.filter(activo=True)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1099,3 +1100,79 @@ def guardar_movimiento_manual_view(request):
 
     # Volver al listado después de guardar o mostrar un error.
     return redirect("prestamos:movimientos_manuales")
+
+# ======================================
+# Desactivar trabajador
+# ======================================
+@login_required
+@require_POST
+def trabajador_desactivar(request, pk):
+    trabajador = get_object_or_404(Trabajador, pk=pk)
+
+    trabajador.activo = False
+    trabajador.save(update_fields=["activo"])
+
+    messages.success(
+        request,
+        f"El trabajador {trabajador.nombre} fue desactivado correctamente."
+    )
+
+    return redirect("prestamos:trabajador_list")
+
+
+# ======================================
+# Reactivar trabajador
+# ======================================
+@login_required
+@require_POST
+def trabajador_reactivar(request, pk):
+    trabajador = get_object_or_404(Trabajador, pk=pk)
+
+    trabajador.activo = True
+    trabajador.save(update_fields=["activo"])
+
+    messages.success(
+        request,
+        f"El trabajador {trabajador.nombre} fue reactivado correctamente."
+    )
+
+    return redirect("prestamos:trabajador_inactivos")
+
+
+# ======================================
+# Lista de trabajadores inactivos
+# ======================================
+class TrabajadorInactivosListView(LoginRequiredMixin, ListView):
+    model = Trabajador
+    template_name = "prestamos/trabajador_inactivos.html"
+    context_object_name = "items"
+    login_url = settings.LOGIN_URL
+
+    def get_queryset(self):
+        return Trabajador.objects.filter(
+            activo=False
+        ).order_by("nombre")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Consultar únicamente trabajadores inactivos
+        trabajadores = Trabajador.objects.filter(activo=False)
+
+        # Totales para las tarjetas
+        context["total_trabajadores"] = trabajadores.count()
+
+        context["total_leon"] = trabajadores.filter(
+            campus__iexact="LEÓN"
+        ).count()
+
+        context["total_managua"] = trabajadores.filter(
+            campus__iexact="MANAGUA"
+        ).count()
+
+        context["total_matagalpa"] = trabajadores.filter(
+            campus__iexact="MATAGALPA"
+        ).count()
+
+        return context
+

@@ -16,6 +16,9 @@ urlpatterns = [
     # Trabajadores
     path("trabajadores/", views.TrabajadorListView.as_view(), name="trabajador_list"),
     path("trabajadores/nuevo/", views.TrabajadorCreateView.as_view(), name="trabajador_create"),
+    path("trabajadores/inactivos/",views.TrabajadorInactivosListView.as_view(),name="trabajador_inactivos",),
+    path("trabajadores/<int:pk>/desactivar/",views.trabajador_desactivar,name="trabajador_desactivar",),
+    path("trabajadores/<int:pk>/reactivar/",views.trabajador_reactivar,name="trabajador_reactivar",),
 
     # Préstamos
     path("prestamos/", views.PrestamoListView.as_view(), name="prestamo_list"),
@@ -43,14 +46,6 @@ urlpatterns = [
     path('estado-general/', estado_cuenta_general_view, name='estado_general'),
 
     # Administración de movimientos contables
-path(
-    "movimientos-manuales/",
-    views.movimientos_manuales_view,
-    name="movimientos_manuales",
-),
-path(
-    "movimientos-manuales/guardar/",
-    views.guardar_movimiento_manual_view,
-    name="guardar_movimiento_manual",
-),
+path("movimientos-manuales/",views.movimientos_manuales_view,name="movimientos_manuales",),
+path("movimientos-manuales/guardar/",views.guardar_movimiento_manual_view,name="guardar_movimiento_manual",),
 ]

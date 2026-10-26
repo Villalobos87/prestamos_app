@@ -57,13 +57,32 @@ class TrabajadorForm(forms.ModelForm):
             'cuenta_bancaria_dolares': 'Cuenta bancaria en dólares (US$)',
         }
 
+
 class PrestamoForm(forms.ModelForm):
+
     class Meta:
         model = Prestamo
-        fields = ["trabajador", "monto", "interes", "comision", "plazo", "fecha_inicio"]
+        fields = [
+            "trabajador",
+            "monto",
+            "interes",
+            "comision",
+            "plazo",
+            "fecha_inicio",
+        ]
+
         widgets = {
-            "fecha_inicio": forms.DateInput(attrs={"type": "date"}),
-            }
+            "fecha_inicio": forms.DateInput(
+                attrs={"type": "date"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["trabajador"].queryset = Trabajador.objects.filter(
+            activo=True
+        ).order_by("nombre")
 
 class SeleccionQuincenaForm(forms.Form):
     campus = forms.ChoiceField(choices=[], label="Campus")
