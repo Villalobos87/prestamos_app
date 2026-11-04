@@ -37,6 +37,7 @@ from django.views.decorators.http import require_POST
 
 
 
+
 # ======================================
 # Trabajador Views
 # ======================================
@@ -1033,7 +1034,7 @@ def guardar_movimiento_manual_view(request):
         # LEER LOS DATOS DEL FORMULARIO
         # ----------------------------------------------
 
-        fecha = request.POST.get("fecha")
+        fecha_texto = request.POST.get("fecha", "").strip()
         tipo = request.POST.get("tipo")
         descripcion = request.POST.get("descripcion", "").strip()
 
@@ -1043,11 +1044,32 @@ def guardar_movimiento_manual_view(request):
         activo = request.POST.get("activo") == "on"
 
         # ----------------------------------------------
-        # VALIDACIONES
+        # CONVERTIR LA FECHA
+        # ACEPTAR DD/MM/AAAA Y AAAA-MM-DD
         # ----------------------------------------------
 
-        if not fecha:
+        if not fecha_texto:
             raise ValueError("La fecha es obligatoria.")
+
+        try:
+            fecha = datetime.strptime(
+                fecha_texto, "%d/%m/%Y"
+            ).date()
+
+        except ValueError:
+            try:
+                fecha = datetime.strptime(
+                    fecha_texto, "%Y-%m-%d"
+                ).date()
+
+            except ValueError:
+                raise ValueError(
+                    "La fecha debe tener el formato DD/MM/AAAA."
+                )
+
+        # ----------------------------------------------
+        # VALIDACIONES
+        # ----------------------------------------------
 
         tipos_validos = {
             opcion[0]
