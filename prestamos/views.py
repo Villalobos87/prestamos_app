@@ -930,8 +930,8 @@ def movimientos_manuales_view(request):
     )
 
     total_capital = (
-        (capital["total_debito"] or Decimal("0.00"))
-        - (capital["total_credito"] or Decimal("0.00"))
+        (capital["total_credito"] or Decimal("0.00"))
+        - (capital["total_debito"] or Decimal("0.00"))
     )
 
     # ======================================================
